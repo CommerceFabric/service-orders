@@ -23,6 +23,13 @@ namespace BusinessLogicLayer.ServiceContracts
         Task<OrderResponse?> GetOrderByCondition(FilterDefinition<Order> filter);
 
         /// <summary>
+        /// Gets orders based on a specified filter condition.
+        /// </summary>
+        /// <param name="filter">The filter to apply to the order query.</param>
+        /// <returns>A list of order responses that match the filter condition.</returns>
+        Task<List<OrderResponse?>> GetOrdersByCondition(FilterDefinition<Order> filter);
+
+        /// <summary>
         /// Adds a new order to the database.
         /// </summary>
         /// <param name="orderAddRequest">The request DTO containing the order details.</param>

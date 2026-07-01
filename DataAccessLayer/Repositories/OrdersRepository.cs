@@ -47,6 +47,12 @@ namespace DataAccessLayer.Repositories
             return await orders.FirstOrDefaultAsync();
         }
 
+        public async Task<IEnumerable<Order?>> GetOrdersByCondition(FilterDefinition<Order> filter)
+        {
+            var orders = await _ordersCollection.FindAsync(filter);
+            return await orders.ToListAsync();
+        }
+
         public async Task<IEnumerable<Order?>> GetOrders()
         {
             var orders = await _ordersCollection.FindAsync(_ => true); // Get all orders, always true

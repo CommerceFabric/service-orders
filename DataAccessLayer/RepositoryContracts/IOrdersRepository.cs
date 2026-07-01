@@ -22,6 +22,13 @@ namespace DataAccessLayer.RepositoryContracts
         Task<Order?> GetOrderByCondition(FilterDefinition<Order> filter);
 
         /// <summary>
+        /// Retrieves a collection of orders based on a specified filter condition.
+        /// </summary>
+        /// <param name="filter">The filter condition to apply.</param>
+        /// <returns>A collection of orders that match the filter condition.</returns>
+        Task<IEnumerable<Order?>> GetOrdersByCondition(FilterDefinition<Order> filter);
+
+        /// <summary>
         /// Adds a new order to the data source.
         /// </summary>
         /// <param name="order">The order to add.</param>

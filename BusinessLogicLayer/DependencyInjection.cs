@@ -1,4 +1,6 @@
 ﻿using BusinessLogicLayer.Mappers;
+using BusinessLogicLayer.ServiceContracts;
+using BusinessLogicLayer.Services;
 using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,6 +34,9 @@ namespace BusinessLogicLayer
 
             // Add Fluentvalidations to use as contract validators for the DTOs
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly); // don't need to do this per validator, as it will automatically scan the assembly for all validators and register them in the DI container
+
+            // Add custom services
+            services.AddScoped<IOrdersService, OrdersService>();
 
             return services;
         }
