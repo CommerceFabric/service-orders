@@ -1,3 +1,36 @@
+# Service Orders Microservice
+
+## TODO
+
+- Make a docker-compose file to run the service and MongoDB together
+
+- Link with User microservice in future so users can only see their own orders
+
+- Integrate this into the infra-platform repo, so in its centralised docker-compose, it will launch this along with the other services and MongoDB
+
+## Running through docker
+
+- Running MongoDB
+
+```bash
+docker run --rm -p 27017:27017 -v ./Resources/orders_mongoDB_init.js:/docker-entrypoint-initdb.d/orders_mongoDB_init.js:ro --name mongodb-server mongo:latest
+```
+
+- To access the MongoDB shell, launch a new terminal and run:
+```bash
+docker exec -it mongodb-server bash
+mongosh
+```
+
+- Can then test it has successfully run by running:
+```bash
+show databases
+use OrdersDatabase
+show collections
+db.orders.find()
+```
+
+
 ## Technical Info
 
 ### Architecture
