@@ -1,4 +1,5 @@
-﻿using FluentValidation;
+﻿using BusinessLogicLayer.Mappers;
+using FluentValidation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -22,7 +23,13 @@ namespace BusinessLogicLayer
         /// <returns></returns>
         public static IServiceCollection AddBusinessLogicLayer(this IServiceCollection services, IConfiguration configuration)
         {
-            
+            // Add AutoMapper to map between DTOs and Entities
+            services.AddAutoMapper(
+                cfg => { },
+                typeof(OrderMappingProfile),
+                typeof(OrderItemMappingProfile)
+            );
+
             // Add Fluentvalidations to use as contract validators for the DTOs
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly); // don't need to do this per validator, as it will automatically scan the assembly for all validators and register them in the DI container
 
