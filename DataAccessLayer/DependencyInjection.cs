@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,17 @@ namespace DataAccessLayer
         /// <returns></returns>
         public static IServiceCollection AddDataAccessLayer(this IServiceCollection services, IConfiguration configuration)
         {
+            // replace connection string template from appsettings.json with actual values from environment variables
+            var connectionString = configuration.GetConnectionString("DefaultConnection")!;
+            connectionString = connectionString.Replace("$ORDERS_MONGODB_PORT", Environment.GetEnvironmentVariable("ORDERS_MONGODB_PORT") ?? "27017"); // default port for MongoDB
+            connectionString = connectionString.Replace("$ORDERS_MONGODB_HOST", Environment.GetEnvironmentVariable("ORDERS_MONGODB_HOST") ?? "localhost");
+
+            // now add mongo db with the connection string
+            services.AddSingleton<IMongoClient>(sp => new MongoClient(connectionString)); // must be singleton, as MongoClient is thread-safe and should be reused across the application
+            services.AddScoped<IMongoDatabase>(sp => 
+                sp.GetRequiredService<IMongoClient>()
+                    .GetDatabase(configuration.GetSection("OrdersDatabase").Value)); // if OrdersDatabase does not exist, MongoDB will create it when the first document is inserted; else, it will use the existing database
+
             // Register your data access layer services here
             // For example:
             // services.AddScoped<IYourRepository, YourRepository>();
