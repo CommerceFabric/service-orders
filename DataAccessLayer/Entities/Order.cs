@@ -23,6 +23,6 @@ namespace DataAccessLayer.Entities
         [BsonRepresentation(MongoDB.Bson.BsonType.Decimal128)]
         public decimal TotalAmount { get; set; }
 
-        public List<OrderItem> Items { get; set; } = new List<OrderItem>();
+        public List<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
 }
