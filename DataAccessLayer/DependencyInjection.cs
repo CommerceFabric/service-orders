@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using DataAccessLayer.Repositories;
+using DataAccessLayer.RepositoryContracts;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using System;
@@ -19,6 +21,7 @@ namespace DataAccessLayer
         /// <returns></returns>
         public static IServiceCollection AddDataAccessLayer(this IServiceCollection services, IConfiguration configuration)
         {
+            #region Adding MongoDB services with connection string from appsettings.json and environment variables
             // replace connection string template from appsettings.json with actual values from environment variables
             var connectionString = configuration.GetConnectionString("DefaultConnection")!;
             connectionString = connectionString.Replace("$ORDERS_MONGODB_PORT", Environment.GetEnvironmentVariable("ORDERS_MONGODB_PORT") ?? "27017"); // default port for MongoDB
@@ -29,10 +32,11 @@ namespace DataAccessLayer
             services.AddScoped<IMongoDatabase>(sp => 
                 sp.GetRequiredService<IMongoClient>()
                     .GetDatabase(configuration.GetSection("OrdersDatabase").Value)); // if OrdersDatabase does not exist, MongoDB will create it when the first document is inserted; else, it will use the existing database
+            #endregion
 
-            // Register your data access layer services here
-            // For example:
-            // services.AddScoped<IYourRepository, YourRepository>();
+            // Add custom services
+            services.AddScoped<IOrdersRepository, OrdersRepository>();
+
             return services;
         }
     }
