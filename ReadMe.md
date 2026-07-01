@@ -33,19 +33,10 @@ This service uses a **Layered Architecture** pattern:
 * FluentValidation (manual validation for Minimal APIs)
 * Exception Handling Middleware
 * Swagger / OpenAPI
-* Minimal API endpoints (lightweight alternative to MVC controllers)
-
----
-
-## API Design
-
-This service currently exposes **Create**, **Update**, and **Delete (CUD)** operations for managing orders.
-
----
+* MVC Controller based API endpoints
 
 ## Design Notes
 
-* Minimal APIs are used instead of Controllers.
-* FluentValidation is manually triggered due to the lack of MVC pipeline integration.
+* FluentValidation is manually triggered in BLL services, but is triggered automatically within the API Controllers
 * MongoDB is used as the primary data store, with repository abstractions handling persistence operations.
 * The service is focused on write operations (Create, Update, Delete) as part of the overall microservices architecture.
