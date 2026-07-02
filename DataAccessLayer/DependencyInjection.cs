@@ -23,7 +23,7 @@ namespace DataAccessLayer
         {
             #region Adding MongoDB services with connection string from appsettings.json and environment variables
             // replace connection string template from appsettings.json with actual values from environment variables
-            var connectionString = configuration.GetConnectionString("DefaultConnection")!;
+            var connectionString = configuration.GetConnectionString("MongoDB")!;
             connectionString = connectionString.Replace("$ORDERS_MONGODB_PORT", Environment.GetEnvironmentVariable("ORDERS_MONGODB_PORT") ?? "27017"); // default port for MongoDB
             connectionString = connectionString.Replace("$ORDERS_MONGODB_HOST", Environment.GetEnvironmentVariable("ORDERS_MONGODB_HOST") ?? "localhost");
 

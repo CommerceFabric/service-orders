@@ -2,13 +2,22 @@ using BusinessLogicLayer;
 using CommerceFabric.OrdersMicroservice.API.Middleware;
 using DataAccessLayer;
 using FluentValidation.AspNetCore;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
-var app = builder.Build();
 
 // Adding DAL and BLL services for dependency injection
 builder.Services.AddDataAccessLayer(builder.Configuration);
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
+
+// Add controllers to the service collection
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter(JsonNamingPolicy.CamelCase, allowIntegerValues: true));
+    });
 
 // FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
@@ -27,6 +36,12 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
+
+// Add auth
+builder.Services.AddAuthorization();
+
+// build AFTER all registrations are done, so that the DI container is built with all the services
+var app = builder.Build();
 
 //Exception handling middleware
 app.UseExceptionHandlingMiddleware();
