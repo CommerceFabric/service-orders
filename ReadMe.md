@@ -15,6 +15,14 @@
 ```bash
 docker run --rm -p 27017:27017 -v ./Resources/orders_mongoDB_init.js:/docker-entrypoint-initdb.d/orders_mongoDB_init.js:ro --name mongodb-server mongo:latest
 ```
+    - this will destroy the container when it is stopped, so any data will be lost. This is fine for development purposes, but in production, you would want to use a volume to persist the data.
+
+- if happy, can push this to docker-hub via:
+```bash
+docker build -t danielmusselwhite/commercefabric_order_microservice:1.0.0 -f .\OrdersMicroservice.API\Dockerfile .
+
+docker push danielmusselwhite/commercefabric_order_microservice:1.0.0
+```
 
 - To access the MongoDB shell, launch a new terminal and run:
 ```bash

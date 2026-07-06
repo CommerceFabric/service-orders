@@ -1,9 +1,11 @@
 ﻿using AutoMapper;
 using BusinessLogicLayer.DTO;
+using BusinessLogicLayer.HttpClients;
 using BusinessLogicLayer.ServiceContracts;
 using DataAccessLayer.Entities;
 using DataAccessLayer.RepositoryContracts;
 using FluentValidation;
+using Microsoft.AspNetCore.Http.HttpResults;
 using MongoDB.Driver;
 
 namespace BusinessLogicLayer.Services
@@ -13,6 +15,7 @@ namespace BusinessLogicLayer.Services
         #region Dependenceies
         private readonly IOrdersRepository _ordersRepository;
         private readonly IMapper _mapper;
+        private readonly UsersMicroserviceClient _usersMicroserviceClient;
 
 
         #region Validators
@@ -27,10 +30,17 @@ namespace BusinessLogicLayer.Services
         #endregion
 
 
-        public OrdersService(IOrdersRepository ordersRepository, IMapper mapper, IValidator<OrderAddRequest> orderAddRequestValidator, IValidator<OrderUpdateRequest> orderUpdateRequestValidator, IValidator<OrderItemAddRequest> orderItemAddRequestValidator, IValidator<OrderItemUpdateRequest> orderItemUpdateRequestValidator)
+        public OrdersService(IOrdersRepository ordersRepository, 
+            IMapper mapper,
+            UsersMicroserviceClient usersMicroserviceClient,
+            IValidator<OrderAddRequest> orderAddRequestValidator, 
+            IValidator<OrderUpdateRequest> orderUpdateRequestValidator, 
+            IValidator<OrderItemAddRequest> orderItemAddRequestValidator, 
+            IValidator<OrderItemUpdateRequest> orderItemUpdateRequestValidator)
         {
             _ordersRepository = ordersRepository;
             _mapper = mapper;
+            _usersMicroserviceClient = usersMicroserviceClient;
 
             _orderAddRequestValidator = orderAddRequestValidator;
             _orderUpdateRequestValidator = orderUpdateRequestValidator;
@@ -53,7 +63,9 @@ namespace BusinessLogicLayer.Services
                 await ValidateAsync(_orderItemAddRequestValidator, orderItem);
             }
 
-            // todo - add logic for checking if userId exists in users microservice
+            // Check against users microservice that the user exists
+            var userDTO = await _usersMicroserviceClient.GetUserByUserID(orderAddRequest.UserID);
+            if(userDTO == null) throw new ArgumentException($"User with ID {orderAddRequest.UserID} not found.");
             #endregion
 
             // Convert data from orderAddRequest to Order entity
@@ -121,7 +133,9 @@ namespace BusinessLogicLayer.Services
                 await ValidateAsync(_orderItemUpdateRequestValidator, orderItem);
             }
 
-            // todo - add logic for checking if userId exists in users microservice
+            // Check against users microservice that the user exists
+            var userDTO = await _usersMicroserviceClient.GetUserByUserID(orderUpdateRequest.UserID);
+            if (userDTO == null) throw new ArgumentException($"User with ID {orderUpdateRequest.UserID} not found.");
             #endregion
 
             // Convert data from orderUpdateRequest to Order entity

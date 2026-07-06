@@ -31,7 +31,7 @@ namespace DataAccessLayer
             services.AddSingleton<IMongoClient>(sp => new MongoClient(connectionString)); // must be singleton, as MongoClient is thread-safe and should be reused across the application
             services.AddScoped<IMongoDatabase>(sp => 
                 sp.GetRequiredService<IMongoClient>()
-                    .GetDatabase(configuration.GetSection("OrdersDatabase").Value)); // if OrdersDatabase does not exist, MongoDB will create it when the first document is inserted; else, it will use the existing database
+                    .GetDatabase(Environment.GetEnvironmentVariable("MONGODB_DATABASE") ?? "OrdersDb")); // if OrdersDatabase does not exist, MongoDB will create it when the first document is inserted; else, it will use the existing database
             #endregion
 
             // Add custom services

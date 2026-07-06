@@ -1,4 +1,5 @@
 using BusinessLogicLayer;
+using BusinessLogicLayer.HttpClients;
 using CommerceFabric.OrdersMicroservice.API.Middleware;
 using DataAccessLayer;
 using FluentValidation.AspNetCore;
@@ -39,6 +40,18 @@ builder.Services.AddCors(options =>
 
 // Add auth
 builder.Services.AddAuthorization();
+
+// Add the HttpClient for the UsersMicroserviceClient, so that it can be injected into the OrdersService
+var usersMicroserviceBaseUrl = builder.Configuration.GetValue<string>("UsersMicroservice:BaseUrl")!;
+usersMicroserviceBaseUrl = usersMicroserviceBaseUrl.Replace("$USERS_MICROSERVICE_PORT", Environment.GetEnvironmentVariable("USERS_MICROSERVICE_PORT") ?? "9090"); // default port for UsersMicroservice
+usersMicroserviceBaseUrl = usersMicroserviceBaseUrl.Replace("$USERS_MICROSERVICE_HOST", Environment.GetEnvironmentVariable("USERS_MICROSERVICE_HOST") ?? "localhost"); // default host for UsersMicroservice
+usersMicroserviceBaseUrl = usersMicroserviceBaseUrl.Replace("$USERS_MICROSERVICE_SCHEME", Environment.GetEnvironmentVariable("USERS_MICROSERVICE_SCHEME") ?? "http"); // default scheme for UsersMicroservice
+
+builder.Services.AddHttpClient<UsersMicroserviceClient>(
+    client => { 
+        client.BaseAddress = new Uri(usersMicroserviceBaseUrl);
+    }
+);
 
 // build AFTER all registrations are done, so that the DI container is built with all the services
 var app = builder.Build();

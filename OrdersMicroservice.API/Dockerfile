@@ -4,8 +4,8 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 USER $APP_UID
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
+EXPOSE 7070
+EXPOSE 7071
 
 
 # This stage is used to build the service project
@@ -29,4 +29,8 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 ENV ORDERS_MONGODB_HOST=localhost
 ENV ORDERS_MONGODB_PORT=27017
+ENV USERS_MICROSERVICE_HOST=localhost
+ENV MONGODB_DATABASE=OrdersDb
+ENV USERS_MICROSERVICE_PORT=9090
+ENV USERS_MICROSERVICE_SCHEME=http
 ENTRYPOINT ["dotnet", "OrdersMicroservice.API.dll"]
