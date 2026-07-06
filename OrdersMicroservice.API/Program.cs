@@ -48,8 +48,23 @@ usersMicroserviceBaseUrl = usersMicroserviceBaseUrl.Replace("$USERS_MICROSERVICE
 usersMicroserviceBaseUrl = usersMicroserviceBaseUrl.Replace("$USERS_MICROSERVICE_SCHEME", Environment.GetEnvironmentVariable("USERS_MICROSERVICE_SCHEME") ?? "http"); // default scheme for UsersMicroservice
 
 builder.Services.AddHttpClient<UsersMicroserviceClient>(
-    client => { 
+    client =>
+    {
         client.BaseAddress = new Uri(usersMicroserviceBaseUrl);
+    }
+);
+
+
+// Add the HttpClient for the ProductsMicroserviceClient, so that it can be injected into the OrdersService
+var productsMicroserviceBaseUrl = builder.Configuration.GetValue<string>("ProductsMicroservice:BaseUrl")!;
+productsMicroserviceBaseUrl = productsMicroserviceBaseUrl.Replace("$PRODUCTS_MICROSERVICE_PORT", Environment.GetEnvironmentVariable("PRODUCTS_MICROSERVICE_PORT") ?? "5021"); // default port for ProductsMicroservice
+productsMicroserviceBaseUrl = productsMicroserviceBaseUrl.Replace("$PRODUCTS_MICROSERVICE_HOST", Environment.GetEnvironmentVariable("PRODUCTS_MICROSERVICE_HOST") ?? "localhost"); // default host for ProductsMicroservice
+productsMicroserviceBaseUrl = productsMicroserviceBaseUrl.Replace("$PRODUCTS_MICROSERVICE_SCHEME", Environment.GetEnvironmentVariable("PRODUCTS_MICROSERVICE_SCHEME") ?? "http"); // default scheme for ProductsMicroservice
+
+builder.Services.AddHttpClient<ProductsMicroserviceClient>(
+    client =>
+    {
+        client.BaseAddress = new Uri(productsMicroserviceBaseUrl);
     }
 );
 

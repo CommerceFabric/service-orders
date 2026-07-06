@@ -16,6 +16,7 @@ namespace BusinessLogicLayer.Services
         private readonly IOrdersRepository _ordersRepository;
         private readonly IMapper _mapper;
         private readonly UsersMicroserviceClient _usersMicroserviceClient;
+        private readonly ProductsMicroserviceClient _productsMicroserviceClient;
 
 
         #region Validators
@@ -33,6 +34,7 @@ namespace BusinessLogicLayer.Services
         public OrdersService(IOrdersRepository ordersRepository, 
             IMapper mapper,
             UsersMicroserviceClient usersMicroserviceClient,
+            ProductsMicroserviceClient productsMicroserviceClient,
             IValidator<OrderAddRequest> orderAddRequestValidator, 
             IValidator<OrderUpdateRequest> orderUpdateRequestValidator, 
             IValidator<OrderItemAddRequest> orderItemAddRequestValidator, 
@@ -41,6 +43,7 @@ namespace BusinessLogicLayer.Services
             _ordersRepository = ordersRepository;
             _mapper = mapper;
             _usersMicroserviceClient = usersMicroserviceClient;
+            _productsMicroserviceClient = productsMicroserviceClient;
 
             _orderAddRequestValidator = orderAddRequestValidator;
             _orderUpdateRequestValidator = orderUpdateRequestValidator;
@@ -61,6 +64,10 @@ namespace BusinessLogicLayer.Services
             foreach (var orderItem in orderAddRequest.OrderItems)
             {
                 await ValidateAsync(_orderItemAddRequestValidator, orderItem);
+
+                // Check against products microservice that the product exists
+                var productDTO = await _productsMicroserviceClient.GetProductByProductID(orderItem.ProductID);
+                if (productDTO == null) throw new ArgumentException($"Product with ID {orderItem.ProductID} not found.");
             }
 
             // Check against users microservice that the user exists
@@ -131,6 +138,10 @@ namespace BusinessLogicLayer.Services
             foreach (var orderItem in orderUpdateRequest.OrderItems)
             {
                 await ValidateAsync(_orderItemUpdateRequestValidator, orderItem);
+
+                // Check against products microservice that the product exists
+                var productDTO = await _productsMicroserviceClient.GetProductByProductID(orderItem.ProductID);
+                if(productDTO == null) throw new ArgumentException($"Product with ID {orderItem.ProductID} not found.");
             }
 
             // Check against users microservice that the user exists
