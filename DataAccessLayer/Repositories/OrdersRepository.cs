@@ -13,10 +13,10 @@ namespace DataAccessLayer.Repositories
         private readonly IMongoDatabase _mongoDatabase;
         #endregion
 
-        private readonly string _collectionName = "Orders";
+        private readonly string _collectionName = "orders";
         IMongoCollection<Order> _ordersCollection;
 
-        public OrdersRepository(IMongoDatabase mongoDatabase) 
+        public OrdersRepository(IMongoDatabase mongoDatabase)
         {
             _mongoDatabase = mongoDatabase;
 
@@ -40,9 +40,9 @@ namespace DataAccessLayer.Repositories
         public async Task<bool> DeleteOrder(Guid orderID)
         {
             var filter = Builders<Order>.Filter.Eq(o => o.OrderID, orderID); // must use OrderID, not _id, as _id is the MongoDB internal ID and OrderID is the business ID
-            
+
             var existingOrder = await _ordersCollection.Find(filter).FirstOrDefaultAsync();
-            if(existingOrder == null) return false; // Order not found, cannot delete
+            if (existingOrder == null) return false; // Order not found, cannot delete
 
             var result = await _ordersCollection.DeleteOneAsync(filter);
             return result.DeletedCount > 0;
@@ -68,11 +68,11 @@ namespace DataAccessLayer.Repositories
 
         public async Task<Order?> UpdateOrder(Order order)
         {
-            order.OrderID = Guid.NewGuid();
+            order._id = order.OrderID; // Ensure _id is set to OrderID for the update operation
             var filter = Builders<Order>.Filter.Eq(o => o.OrderID, order.OrderID); // must use OrderID, not _id, as _id is the MongoDB internal ID and OrderID is the business ID
 
             var existingOrder = await _ordersCollection.Find(filter).FirstOrDefaultAsync();
-            if(existingOrder == null) return null; // Order not found, cannot update
+            if (existingOrder == null) return null; // Order not found, cannot update
 
             var result = await _ordersCollection.ReplaceOneAsync(filter, order);
             return result.IsAcknowledged ? order : null;

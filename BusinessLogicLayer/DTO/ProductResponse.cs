@@ -16,7 +16,8 @@ namespace BusinessLogicLayer.DTO
     (
         Guid ProductID,
         string ProductName,
-        CategoryOptions Category,
+        string Category,
+        //CategoryOptions Category, // todo - maybe use enum for category options in the future
         double? UnitPrice,
         int? QuantityInStock
     );

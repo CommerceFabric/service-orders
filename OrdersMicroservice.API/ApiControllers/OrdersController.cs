@@ -75,12 +75,18 @@ namespace OrdersMicroservice.API.ApiControllers
         [HttpGet("search/orderdate/{orderDate}")]
         public async Task<ActionResult<IEnumerable<OrderResponse?>>> GetOrderByOrderDate(DateTime orderDate)
         {
+            // normalize to utc
+            var start = DateTime.SpecifyKind(orderDate.Date, DateTimeKind.Utc);
+            var end = start.AddDays(1);
+
             // only check date, not time, so we need to create a filter that checks if the orderDate is between the start and end of the specified date
             FilterDefinition<Order> filter = Builders<Order>.Filter.And(
-                Builders<Order>.Filter.Gte(o => o.OrderDate, orderDate.Date),
-                Builders<Order>.Filter.Lt(o => o.OrderDate, orderDate.Date.AddDays(1))
+                Builders<Order>.Filter.Gte(o => o.OrderDate, start),
+                Builders<Order>.Filter.Lt(o => o.OrderDate, end)
             );
             var orders = await _ordersService.GetOrdersByCondition(filter);
+            if (orders == null || !orders.Any()) return NotFound();
+
             return Ok(orders);
         }
 
@@ -94,10 +100,10 @@ namespace OrdersMicroservice.API.ApiControllers
         [HttpPost]
         public async Task<ActionResult<OrderResponse?>> AddOrder(OrderAddRequest order)
         {
-            if(order == null) return BadRequest("Order request cannot be null.");
+            if (order == null) return BadRequest("Order request cannot be null.");
 
             var addedOrder = await _ordersService.AddOrder(order);
-            if(addedOrder == null) return Problem("Failed to add order.");
+            if (addedOrder == null) return Problem("Failed to add order.");
 
             return Created($"api/Orders/{addedOrder.OrderID}", addedOrder);
         }
@@ -113,8 +119,8 @@ namespace OrdersMicroservice.API.ApiControllers
         [HttpPut("{orderID}")]
         public async Task<ActionResult<OrderResponse?>> UpdateOrder(Guid orderID, OrderUpdateRequest order)
         {
-            if(order == null) return BadRequest("Order request cannot be null.");
-            if(orderID == Guid.Empty) return BadRequest("Order ID in the URL cannot be empty.");
+            if (order == null) return BadRequest("Order request cannot be null.");
+            if (orderID == Guid.Empty) return BadRequest("Order ID in the URL cannot be empty.");
             if (orderID != order.OrderID) return BadRequest("Order ID in the URL does not match the Order ID in the request body.");
 
             var updatedOrder = await _ordersService.UpdateOrder(order);

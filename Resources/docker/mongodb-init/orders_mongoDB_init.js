@@ -221,6 +221,6 @@ var orders = [
 console.log(orders);
 
 //Switch to your database
-var db = db.getSiblingDB("OrdersDatabase");
+var db = db.getSiblingDB("OrdersDb");
 
 db.orders.insertMany(orders);

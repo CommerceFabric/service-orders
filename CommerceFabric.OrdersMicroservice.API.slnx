@@ -1,5 +1,8 @@
 <Solution>
   <Project Path="BusinessLogicLayer/BusinessLogicLayer.csproj" Id="94fb236e-9d26-4f88-a6b2-c09dda567174" />
   <Project Path="DataAccessLayer/DataAccessLayer.csproj" Id="ea7330fb-acca-4b1e-80bf-e6945f1c7276" />
+  <Project Path="docker-compose.dcproj">
+    <Build />
+  </Project>
   <Project Path="OrdersMicroservice.API/OrdersMicroservice.API.csproj" />
 </Solution>

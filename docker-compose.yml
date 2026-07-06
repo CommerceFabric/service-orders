@@ -1,0 +1,120 @@
+services:
+
+  ordersmicroservice.api:
+    image: ${DOCKER_REGISTRY-}ordersmicroserviceapi
+    build:
+      context: .
+      dockerfile: OrdersMicroservice.API/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORT=8080 
+      - ORDERS_MONGODB_HOST=mongodb-orderservice
+      - ORDERS_MONGODB_PORT=27017
+      - USERS_MICROSERVICE_HOST=userservice
+      - MONGODB_DATABASE=OrdersDb
+      - USERS_MICROSERVICE_PORT=8080
+      - USERS_MICROSERVICE_SCHEME=http
+      - PRODUCTS_MICROSERVICE_HOST=productservice
+      - PRODUCTS_MICROSERVICE_PORT=8080
+      - PRODUCTS_MICROSERVICE_SCHEME=http
+    ports:
+      - "7070:8080"
+    restart: unless-stopped
+    networks:
+      - orders-mongodb-network
+      - commercefabric-network
+    depends_on:
+      - mongodb-orderservice
+
+  mongodb-orderservice:
+    image: mongo
+    container_name: mongodb-orderservice
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./Resources/docker/mongodb-init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - orders-mongodb-network
+    restart: unless-stopped
+
+  # Pull the other microservices this depends on from dockerhub, so that they can be used for testing the Orders microservice
+  postgressql-userservice:
+    image: postgres:18.0
+    container_name: postgressql-userservice
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: userService
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./Resources/docker/postgres-init:/docker-entrypoint-initdb.d
+    networks:
+      - users-postgres-network
+    restart: unless-stopped
+
+  userservice:
+    image: danielmusselwhite/commercefabric_user_microservice:1.0.0
+    container_name: userservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORT=8080
+      - COMMERCEFABRIC_USERSERVICE_DB_HOST=postgressql-userservice
+      - COMMERCEFABRIC_USERSERVICE_DB_PORT=5432
+      - COMMERCEFABRIC_USERSERVICE_DB_USER=postgres
+      - COMMERCEFABRIC_USERSERVICE_DB_PASSWORD=admin
+      - COMMERCEFABRIC_USERSERVICE_DB_NAME=userService
+    ports:
+      - "9090:8080"
+    networks:
+      - users-postgres-network
+      - commercefabric-network
+    depends_on:
+      - postgressql-userservice
+    restart: unless-stopped
+
+  mysql-productservice:
+    image: mysql:9.7.1
+    container_name: mysql-productservice
+    environment:
+      MYSQL_ROOT_PASSWORD: admin
+      MYSQL_DATABASE: productService
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./Resources/docker/mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - products-mysql-network
+    restart: unless-stopped
+
+  productservice:
+    image: danielmusselwhite/commercefabric_product_microservice:1.0.0
+    container_name: productservice
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_HTTP_PORT=8080
+      - COMMERCEFABRIC_PRODUCTSERVICE_DB_HOST=mysql-productservice
+      - COMMERCEFABRIC_PRODUCTSERVICE_DB_PORT=3306
+      - COMMERCEFABRIC_PRODUCTSERVICE_DB_USER=root
+      - COMMERCEFABRIC_PRODUCTSERVICE_DB_PASSWORD=admin
+      - COMMERCEFABRIC_PRODUCTSERVICE_DB_NAME=productService
+    ports:
+      - "6060:8080"
+    networks:
+      - products-mysql-network
+      - commercefabric-network
+    depends_on:
+      - mysql-productservice
+    restart: unless-stopped
+
+networks:
+  orders-mongodb-network:
+    driver: bridge
+    
+  products-mysql-network:
+    driver: bridge
+
+  users-postgres-network:
+    driver: bridge
+
+  commercefabric-network:
+    driver: bridge
