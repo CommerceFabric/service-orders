@@ -66,6 +66,22 @@ namespace OrdersMicroservice.API.ApiControllers
         }
 
         /// <summary>
+        /// GET: /api/Orders/search/userid/{userID}
+        /// ---
+        /// Get all orders matching a specific userID
+        /// </summary>
+        /// <param name="userID">The ID of the user to search for</param>
+        /// <returns>All orders containing the specified userID</returns>
+        [HttpGet("search/userid/{userID}")]
+        public async Task<ActionResult<IEnumerable<OrderResponse?>>> GetOrderByUserID(Guid userID)
+        {
+            // todo - add security so only the user with the specified userID can access their own orders, or an admin can access any user's orders. For now, this is left open for testing purposes.
+            FilterDefinition<Order> filter = Builders<Order>.Filter.Eq(o => o.UserID, userID);
+            var orders = await _ordersService.GetOrdersByCondition(filter);
+            return Ok(orders);
+        }
+
+        /// <summary>
         /// GET: /api/Orders/search/orderDate/{orderDate}
         /// ---
         /// Get all orders matching a specific orderDate
