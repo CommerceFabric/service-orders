@@ -76,14 +76,14 @@ app.UseExceptionHandlingMiddleware();
 
 // Enabling routing and Cors
 app.UseRouting();
-app.UseCors();
+app.UseCors("AllowAll");
 
 // use swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 
 // auth
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 

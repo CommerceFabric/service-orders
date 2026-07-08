@@ -2,11 +2,7 @@
 
 ## TODO
 
-- Make a docker-compose file to run the service and MongoDB together
-
-- Link with User microservice in future so users can only see their own orders
-
-- Integrate this into the infra-platform repo, so in its centralised docker-compose, it will launch this along with the other services and MongoDB
+- make this and my other microservices use https redirection, but for now, I will leave it off to make it easier to test in development.
 
 ## Running through docker
 
