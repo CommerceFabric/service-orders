@@ -92,7 +92,7 @@ namespace BusinessLogicLayer.Services
 
             // Convert data from Order entity to OrderResponse DTO
             var orderDTO = _mapper.Map<OrderResponse>(orderOutput);
-            return await EnrichOrderWithProductDetails(orderDTO, productDTOsDictionary);
+            return await EnrichOrder(orderDTO, productDTOsDictionary, userDTO);
         }
 
         public async Task<bool> DeleteOrder(Guid orderID)
@@ -113,7 +113,7 @@ namespace BusinessLogicLayer.Services
         {
             var order = await _ordersRepository.GetOrderByCondition(filter);
             var orderDTO = _mapper.Map<OrderResponse?>(order);
-            return await EnrichOrderWithProductDetails(orderDTO);
+            return await EnrichOrder(orderDTO);
         }
 
         public async Task<List<OrderResponse?>> GetOrdersByCondition(FilterDefinition<Order> filter)
@@ -125,7 +125,7 @@ namespace BusinessLogicLayer.Services
             foreach (var orderDTO in orderDTOs)
             {
                 if (orderDTO == null) continue;
-                enrichedOrderDTOs.Add(await EnrichOrderWithProductDetails(orderDTO));
+                enrichedOrderDTOs.Add(await EnrichOrder(orderDTO));
             }
 
             return enrichedOrderDTOs;
@@ -140,7 +140,7 @@ namespace BusinessLogicLayer.Services
             foreach (var orderDTO in orderDTOs)
             {
                 if (orderDTO == null) continue;
-                enrichedOrderDTOs.Add(await EnrichOrderWithProductDetails(orderDTO));
+                enrichedOrderDTOs.Add(await EnrichOrder(orderDTO));
             }
 
             return enrichedOrderDTOs;
@@ -187,7 +187,7 @@ namespace BusinessLogicLayer.Services
 
             // Convert data from Order entity to OrderResponse DTO
             var orderDTO = _mapper.Map<OrderResponse>(orderOutput);
-            return await EnrichOrderWithProductDetails(orderDTO, productDTOsDictionary);
+            return await EnrichOrder(orderDTO, productDTOsDictionary, userDTO);
         }
 
         #region Helper Methods
@@ -234,10 +234,12 @@ namespace BusinessLogicLayer.Services
         /// <summary>
         /// Enriches the given OrderResponse with product details for each order item by calling EnrichOrderItemWithProductDetails for each item.
         /// If any product is not found, an ArgumentException is thrown.
+        /// Also enriches the order with user details (UserPersonName and UserEmail) if provided.
         /// </summary>
         /// <param name="orderDTO"></param>
+        /// <param name="userDTO">The user details to enrich the order with.</param>
         /// <returns></returns>
-        private async Task<OrderResponse?> EnrichOrderWithProductDetails(OrderResponse? orderDTO, Dictionary<Guid, ProductDTO>? productDTOs = null)
+        private async Task<OrderResponse?> EnrichOrder(OrderResponse? orderDTO, Dictionary<Guid, ProductDTO>? productDTOs = null, UserDTO? userDTO = null)
         {
             if (orderDTO == null) return null;
 
@@ -248,10 +250,16 @@ namespace BusinessLogicLayer.Services
                         item => EnrichOrderItemWithProductDetails(item, productDTOs)
                     ))).ToList();
 
+
+            // Fetch user details from the UsersMicroserviceClient if not provided
+            if (userDTO == null) userDTO = await _usersMicroserviceClient.GetUserByUserID(orderDTO.UserID);
+
             // Return a new OrderResponse with enriched order items
             return orderDTO with
             {
-                OrderItems = enrichedOrderItems
+                OrderItems = enrichedOrderItems,
+                UserPersonName = userDTO?.PersonName ?? "Unknown Name",
+                UserEmail = userDTO?.Email ?? "Unknown Email"
             };
         }
         #endregion

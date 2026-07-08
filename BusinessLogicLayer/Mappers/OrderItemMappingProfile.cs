@@ -13,10 +13,7 @@ namespace BusinessLogicLayer.Mappers
         {
             CreateMap<OrderItemAddRequest, OrderItem>();
             CreateMap<OrderItemUpdateRequest, OrderItem>();
-            CreateMap<OrderItem, OrderItemResponse>()
-                .ForMember(dest => dest.ProductName, opt => opt.Ignore())
-                .ForMember(dest => dest.Category, opt => opt.Ignore());
-            CreateMap<ProductDTO, OrderItemResponse>();
+            CreateMap<OrderItem, OrderItemResponse>();
         }
     }
 }
