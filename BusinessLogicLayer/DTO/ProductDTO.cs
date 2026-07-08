@@ -12,12 +12,11 @@ namespace BusinessLogicLayer.DTO
     /// <param name="Category"></param>
     /// <param name="UnitPrice"></param>
     /// <param name="QuantityInStock"></param>
-    public record ProductResponse
+    public record ProductDTO
     (
         Guid ProductID,
-        string ProductName,
-        string Category,
-        //CategoryOptions Category, // todo - maybe use enum for category options in the future
+        string? ProductName,
+        string? Category,
         double? UnitPrice,
         int? QuantityInStock
     );
