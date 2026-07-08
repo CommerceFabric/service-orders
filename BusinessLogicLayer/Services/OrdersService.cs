@@ -31,13 +31,13 @@ namespace BusinessLogicLayer.Services
         #endregion
 
 
-        public OrdersService(IOrdersRepository ordersRepository, 
+        public OrdersService(IOrdersRepository ordersRepository,
             IMapper mapper,
             UsersMicroserviceClient usersMicroserviceClient,
             ProductsMicroserviceClient productsMicroserviceClient,
-            IValidator<OrderAddRequest> orderAddRequestValidator, 
-            IValidator<OrderUpdateRequest> orderUpdateRequestValidator, 
-            IValidator<OrderItemAddRequest> orderItemAddRequestValidator, 
+            IValidator<OrderAddRequest> orderAddRequestValidator,
+            IValidator<OrderUpdateRequest> orderUpdateRequestValidator,
+            IValidator<OrderItemAddRequest> orderItemAddRequestValidator,
             IValidator<OrderItemUpdateRequest> orderItemUpdateRequestValidator)
         {
             _ordersRepository = ordersRepository;
@@ -61,6 +61,7 @@ namespace BusinessLogicLayer.Services
             await ValidateAsync(_orderAddRequestValidator, orderAddRequest);
 
             // check the validity of each order item in the orderAddRequest using the validator, if any of them is not valid throw a ValidationException with the error messages
+            Dictionary<Guid, ProductDTO> productDTOsDictionary = new Dictionary<Guid, ProductDTO>();
             foreach (var orderItem in orderAddRequest.OrderItems)
             {
                 await ValidateAsync(_orderItemAddRequestValidator, orderItem);
@@ -68,18 +69,19 @@ namespace BusinessLogicLayer.Services
                 // Check against products microservice that the product exists
                 var productDTO = await _productsMicroserviceClient.GetProductByProductID(orderItem.ProductID);
                 if (productDTO == null) throw new ArgumentException($"Product with ID {orderItem.ProductID} not found.");
+                productDTOsDictionary[orderItem.ProductID] = productDTO;
             }
 
             // Check against users microservice that the user exists
             var userDTO = await _usersMicroserviceClient.GetUserByUserID(orderAddRequest.UserID);
-            if(userDTO == null) throw new ArgumentException($"User with ID {orderAddRequest.UserID} not found.");
+            if (userDTO == null) throw new ArgumentException($"User with ID {orderAddRequest.UserID} not found.");
             #endregion
 
             // Convert data from orderAddRequest to Order entity
             var orderInput = _mapper.Map<Order>(orderAddRequest);
 
             // Generate values
-            foreach(OrderItem orderItem in orderInput.OrderItems)
+            foreach (OrderItem orderItem in orderInput.OrderItems)
             {
                 orderItem._id = Guid.NewGuid();
                 orderItem.TotalPrice = orderItem.UnitPrice * orderItem.Quantity;
@@ -89,8 +91,8 @@ namespace BusinessLogicLayer.Services
             var orderOutput = await _ordersRepository.AddOrder(orderInput);
 
             // Convert data from Order entity to OrderResponse DTO
-            var orderResponse = _mapper.Map<OrderResponse>(orderOutput);
-            return orderResponse;
+            var orderDTO = _mapper.Map<OrderResponse>(orderOutput);
+            return await EnrichOrderWithProductDetails(orderDTO, productDTOsDictionary);
         }
 
         public async Task<bool> DeleteOrder(Guid orderID)
@@ -110,19 +112,38 @@ namespace BusinessLogicLayer.Services
         public async Task<OrderResponse?> GetOrderByCondition(FilterDefinition<Order> filter)
         {
             var order = await _ordersRepository.GetOrderByCondition(filter);
-            return _mapper.Map<OrderResponse>(order);
+            var orderDTO = _mapper.Map<OrderResponse?>(order);
+            return await EnrichOrderWithProductDetails(orderDTO);
         }
 
         public async Task<List<OrderResponse?>> GetOrdersByCondition(FilterDefinition<Order> filter)
         {
             var orders = await _ordersRepository.GetOrdersByCondition(filter);
-            return _mapper.Map<IEnumerable<OrderResponse?>>(orders).ToList();
+            var orderDTOs = _mapper.Map<IEnumerable<OrderResponse?>>(orders).ToList();
+            var enrichedOrderDTOs = new List<OrderResponse?>();
+
+            foreach (var orderDTO in orderDTOs)
+            {
+                if (orderDTO == null) continue;
+                enrichedOrderDTOs.Add(await EnrichOrderWithProductDetails(orderDTO));
+            }
+
+            return enrichedOrderDTOs;
         }
 
         public async Task<List<OrderResponse?>> GetOrders()
         {
             var orders = await _ordersRepository.GetOrders();
-            return _mapper.Map<IEnumerable<OrderResponse?>>(orders).ToList();
+            var orderDTOs = _mapper.Map<IEnumerable<OrderResponse?>>(orders).ToList();
+            var enrichedOrderDTOs = new List<OrderResponse?>();
+
+            foreach (var orderDTO in orderDTOs)
+            {
+                if (orderDTO == null) continue;
+                enrichedOrderDTOs.Add(await EnrichOrderWithProductDetails(orderDTO));
+            }
+
+            return enrichedOrderDTOs;
         }
 
         public async Task<OrderResponse?> UpdateOrder(OrderUpdateRequest orderUpdateRequest)
@@ -135,13 +156,15 @@ namespace BusinessLogicLayer.Services
             await ValidateAsync(_orderUpdateRequestValidator, orderUpdateRequest);
 
             // check the validity of each order item in the orderUpdateRequest using the validator, if any of them is not valid throw a ValidationException with the error messages
+            Dictionary<Guid, ProductDTO> productDTOsDictionary = new Dictionary<Guid, ProductDTO>();
             foreach (var orderItem in orderUpdateRequest.OrderItems)
             {
                 await ValidateAsync(_orderItemUpdateRequestValidator, orderItem);
 
                 // Check against products microservice that the product exists
                 var productDTO = await _productsMicroserviceClient.GetProductByProductID(orderItem.ProductID);
-                if(productDTO == null) throw new ArgumentException($"Product with ID {orderItem.ProductID} not found.");
+                if (productDTO == null) throw new ArgumentException($"Product with ID {orderItem.ProductID} not found.");
+                productDTOsDictionary[orderItem.ProductID] = productDTO;
             }
 
             // Check against users microservice that the user exists
@@ -163,8 +186,8 @@ namespace BusinessLogicLayer.Services
             var orderOutput = await _ordersRepository.UpdateOrder(orderInput);
 
             // Convert data from Order entity to OrderResponse DTO
-            var orderResponse = _mapper.Map<OrderResponse>(orderOutput);
-            return orderResponse;
+            var orderDTO = _mapper.Map<OrderResponse>(orderOutput);
+            return await EnrichOrderWithProductDetails(orderDTO, productDTOsDictionary);
         }
 
         #region Helper Methods
@@ -176,7 +199,7 @@ namespace BusinessLogicLayer.Services
         /// <param name="model">The model to validate.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         /// <exception cref="ValidationException">Thrown when the validation fails.</exception>
-        private static async Task ValidateAsync<T>(IValidator<T> validator, T model)
+        private async Task ValidateAsync<T>(IValidator<T> validator, T model)
         {
             var validation = await validator.ValidateAsync(model);
 
@@ -184,6 +207,52 @@ namespace BusinessLogicLayer.Services
             {
                 throw new ValidationException(string.Join(", ", validation.Errors.Select(e => e.ErrorMessage)));
             }
+        }
+
+        /// <summary>
+        /// Enriches the given OrderItemResponse with product details (ProductName and Category) by fetching the product information from the ProductsMicroserviceClient.
+        /// If the product is not found, an ArgumentException is thrown.
+        /// </summary>
+        /// <param name="orderItem"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException"></exception>
+        private async Task<OrderItemResponse> EnrichOrderItemWithProductDetails(OrderItemResponse orderItem, Dictionary<Guid, ProductDTO>? productDTOs = null)
+        {
+            if (orderItem?.ProductID == null) throw new ArgumentException("OrderItemResponse or ProductID cannot be null.");
+
+            var productDTO = productDTOs?.GetValueOrDefault(orderItem.ProductID) // if provided productDTO's dictionary, use it to find the product, otherwise call the microservice
+                             ?? await _productsMicroserviceClient.GetProductByProductID(orderItem.ProductID); // else, fetch the product details from the ProductsMicroserviceClient
+            if (productDTO == null) throw new ArgumentException($"Product with ID {orderItem.ProductID} not found.");
+
+            return orderItem with
+            {
+                ProductName = productDTO.ProductName,
+                Category = productDTO.Category
+            };
+        }
+
+        /// <summary>
+        /// Enriches the given OrderResponse with product details for each order item by calling EnrichOrderItemWithProductDetails for each item.
+        /// If any product is not found, an ArgumentException is thrown.
+        /// </summary>
+        /// <param name="orderDTO"></param>
+        /// <returns></returns>
+        private async Task<OrderResponse?> EnrichOrderWithProductDetails(OrderResponse? orderDTO, Dictionary<Guid, ProductDTO>? productDTOs = null)
+        {
+            if (orderDTO == null) return null;
+
+            var enrichedOrderItems = orderDTO.OrderItems == null
+                ? new List<OrderItemResponse>()
+                : (await Task.WhenAll(
+                    orderDTO.OrderItems.Select(
+                        item => EnrichOrderItemWithProductDetails(item, productDTOs)
+                    ))).ToList();
+
+            // Return a new OrderResponse with enriched order items
+            return orderDTO with
+            {
+                OrderItems = enrichedOrderItems
+            };
         }
         #endregion
     }
