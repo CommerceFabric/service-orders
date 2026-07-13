@@ -13,6 +13,19 @@ namespace BusinessLogicLayer.Policies
             _logger = logger;
         }
 
+        public IAsyncPolicy<HttpResponseMessage> GetBulkheadIsolationPolicy()
+        {
+            return Policy.BulkheadAsync<HttpResponseMessage>(
+                maxParallelization: 10, // maximum number of concurrent executions
+                maxQueuingActions: 20, // maximum number of actions that can be queued
+                onBulkheadRejectedAsync: async context => // any additional actions to perform when the bulkhead rejects execution due to too many concurrent requests
+                {
+                    _logger.LogWarning("Bulkhead rejected execution due to too many concurrent requests.");
+                    await Task.CompletedTask;
+                }
+            );
+        }
+
         public IAsyncPolicy<HttpResponseMessage> GetFallbackPolicy()
         {
             return Policy.HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode) // if request fails, apply fallback logic (effectively, intercepting the failed response and replacing it)...

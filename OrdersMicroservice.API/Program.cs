@@ -80,6 +80,8 @@ builder.Services.AddHttpClient<ProductsMicroserviceClient>(
     }
 ).AddPolicyHandler(
     builder.Services.BuildServiceProvider().GetRequiredService<IProductsMicroservicePolicies>().GetFallbackPolicy()
+).AddPolicyHandler(
+    builder.Services.BuildServiceProvider().GetRequiredService<IProductsMicroservicePolicies>().GetBulkheadIsolationPolicy()
 );
 
 // build AFTER all registrations are done, so that the DI container is built with all the services
