@@ -2,6 +2,7 @@
 using DnsClient.Internal;
 using Microsoft.Extensions.Logging;
 using Polly.CircuitBreaker;
+using Polly.Timeout;
 using System;
 using System.Collections.Generic;
 using System.Net.Http.Json;
@@ -56,6 +57,28 @@ namespace BusinessLogicLayer.HttpClients
                     "Error retrieving user"
                 );
             }
-        }
+            catch (TimeoutRejectedException)
+            {
+                _logger.LogError($"Request timed out. Unable to retrieve user with ID {userID}.");
+                return new UserDTO
+                (
+                    Guid.Empty,
+                    "Error retrieving user",
+                    "Error retrieving user",
+                    "Error retrieving user"
+                );
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"An error occurred while retrieving user with ID {userID}.");
+                return new UserDTO
+                (
+                    Guid.Empty,
+                    "Error retrieving user",
+                    "Error retrieving user",
+                    "Error retrieving user"
+                );
+            }
     }
 }
