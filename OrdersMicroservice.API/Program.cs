@@ -42,6 +42,7 @@ builder.Services.AddCors(options =>
 
 // Add polly policies
 builder.Services.AddTransient<IUsersMicroservicePolicies, UsersMicroservicePolicies>();
+builder.Services.AddTransient<IProductsMicroservicePolicies, ProductsMicroservicePolicies>();
 
 // Add auth
 builder.Services.AddAuthorization();
@@ -75,6 +76,8 @@ builder.Services.AddHttpClient<ProductsMicroserviceClient>(
     {
         client.BaseAddress = new Uri(productsMicroserviceBaseUrl);
     }
+).AddPolicyHandler(
+    builder.Services.BuildServiceProvider().GetRequiredService<IProductsMicroservicePolicies>().GetFallbackPolicy()
 );
 
 // build AFTER all registrations are done, so that the DI container is built with all the services
