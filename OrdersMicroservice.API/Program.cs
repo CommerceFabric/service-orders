@@ -1,8 +1,10 @@
 using BusinessLogicLayer;
 using BusinessLogicLayer.HttpClients;
+using BusinessLogicLayer.Policies;
 using CommerceFabric.OrdersMicroservice.API.Middleware;
 using DataAccessLayer;
 using FluentValidation.AspNetCore;
+using Polly;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -38,6 +40,9 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Add polly policies
+builder.Services.AddTransient<IUsersMicroservicePolicies, UsersMicroservicePolicies>();
+
 // Add auth
 builder.Services.AddAuthorization();
 
@@ -52,6 +57,8 @@ builder.Services.AddHttpClient<UsersMicroserviceClient>(
     {
         client.BaseAddress = new Uri(usersMicroserviceBaseUrl);
     }
+).AddPolicyHandler(
+    builder.Services.BuildServiceProvider().GetRequiredService<IUsersMicroservicePolicies>().GetRetryPolicy()
 );
 
 
@@ -66,6 +73,16 @@ builder.Services.AddHttpClient<ProductsMicroserviceClient>(
     {
         client.BaseAddress = new Uri(productsMicroserviceBaseUrl);
     }
+).AddPolicyHandler(
+    Policy.HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode) // if request fails, wait and retry...
+    .WaitAndRetryAsync(
+        retryCount: 5, // max number of retries
+        sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), // exponential backoff
+        onRetry: (outcome, timespan, retryAttempt, context) => // extra actions to perform on retry
+        {
+            // todo - Log the retry attempt or perform any other action
+        }
+    )
 );
 
 // build AFTER all registrations are done, so that the DI container is built with all the services
