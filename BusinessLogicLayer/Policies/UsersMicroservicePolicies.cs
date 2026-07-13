@@ -46,5 +46,14 @@ namespace BusinessLogicLayer.Policies
         {
             return Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromMilliseconds(2500));
         }
+
+        public IAsyncPolicy<HttpResponseMessage> GetCombinedPolicy()
+        {
+            var retryPolicy = GetRetryPolicy();
+            var circuitBreakerPolicy = GetCircuitBreakerPolicy();
+            var timeoutPolicy = GetTimeoutPolicy();
+
+            return Policy.WrapAsync(retryPolicy, circuitBreakerPolicy, timeoutPolicy);
+        }
     }
 }

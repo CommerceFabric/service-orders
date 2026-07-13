@@ -58,14 +58,10 @@ builder.Services.AddHttpClient<UsersMicroserviceClient>(
     {
         client.BaseAddress = new Uri(usersMicroserviceBaseUrl);
     }
-).AddPolicyHandler(
-    builder.Services.BuildServiceProvider().GetRequiredService<IUsersMicroservicePolicies>().GetRetryPolicy()
-).AddPolicyHandler(
-    builder.Services.BuildServiceProvider().GetRequiredService<IUsersMicroservicePolicies>().GetCircuitBreakerPolicy()
-).AddPolicyHandler(
-    builder.Services.BuildServiceProvider().GetRequiredService<IUsersMicroservicePolicies>().GetTimeoutPolicy()
+)
+.AddPolicyHandler(
+    builder.Services.BuildServiceProvider().GetRequiredService<IUsersMicroservicePolicies>().GetCombinedPolicy()
 );
-
 
 // Add the HttpClient for the ProductsMicroserviceClient, so that it can be injected into the OrdersService
 var productsMicroserviceBaseUrl = builder.Configuration.GetValue<string>("ProductsMicroservice:BaseUrl")!;
@@ -78,10 +74,9 @@ builder.Services.AddHttpClient<ProductsMicroserviceClient>(
     {
         client.BaseAddress = new Uri(productsMicroserviceBaseUrl);
     }
-).AddPolicyHandler(
-    builder.Services.BuildServiceProvider().GetRequiredService<IProductsMicroservicePolicies>().GetFallbackPolicy()
-).AddPolicyHandler(
-    builder.Services.BuildServiceProvider().GetRequiredService<IProductsMicroservicePolicies>().GetBulkheadIsolationPolicy()
+)
+.AddPolicyHandler(
+    builder.Services.BuildServiceProvider().GetRequiredService<IProductsMicroservicePolicies>().GetCombinedPolicy()
 );
 
 // build AFTER all registrations are done, so that the DI container is built with all the services

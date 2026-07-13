@@ -23,5 +23,11 @@ namespace BusinessLogicLayer.Policies
         /// </summary>
         /// <returns></returns>
         IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy();
+
+        /// <summary>
+        /// This method combines the retry, circuit breaker, and timeout policies into a single policy.
+        /// </summary>
+        /// <returns></returns>
+        IAsyncPolicy<HttpResponseMessage> GetCombinedPolicy();
     }
 }

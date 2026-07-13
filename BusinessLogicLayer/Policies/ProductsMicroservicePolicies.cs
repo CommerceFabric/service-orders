@@ -52,5 +52,12 @@ namespace BusinessLogicLayer.Policies
                     })
                 );
         }
+
+        public IAsyncPolicy<HttpResponseMessage> GetCombinedPolicy()
+        {
+            var fallbackPolicy = GetFallbackPolicy();
+            var bulkheadPolicy = GetBulkheadIsolationPolicy();
+            return Policy.WrapAsync(fallbackPolicy, bulkheadPolicy); // wrap the policies so that the fallback policy is applied first, followed by the bulkhead isolation policy
+        }
     }
 }

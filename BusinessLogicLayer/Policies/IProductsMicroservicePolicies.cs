@@ -18,5 +18,11 @@ namespace BusinessLogicLayer.Policies
         /// </summary>
         /// <returns></returns>
         IAsyncPolicy<HttpResponseMessage> GetBulkheadIsolationPolicy();
+
+        /// <summary>
+        /// This method combines the fallback and bulkhead isolation policies into a single policy.
+        /// </summary>
+        /// <returns></returns>
+        IAsyncPolicy<HttpResponseMessage> GetCombinedPolicy();
     }
 }
