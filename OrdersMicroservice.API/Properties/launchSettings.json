@@ -13,7 +13,9 @@
         "MONGODB_DATABASE": "OrdersDb",
         "PRODUCTS_MICROSERVICE_HOST": "localhost",
         "PRODUCTS_MICROSERVICE_PORT": "8080",
-        "PRODUCTS_MICROSERVICE_SCHEME": "http"
+        "PRODUCTS_MICROSERVICE_SCHEME": "http",
+        "REDIS_HOST": "redis",
+        "REDIS_PORT": "6379"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5174",
@@ -32,7 +34,9 @@
         "MONGODB_DATABASE": "OrdersDb",
         "PRODUCTS_MICROSERVICE_HOST": "localhost",
         "PRODUCTS_MICROSERVICE_PORT": "8081",
-        "PRODUCTS_MICROSERVICE_SCHEME": "https"
+        "PRODUCTS_MICROSERVICE_SCHEME": "https",
+        "REDIS_HOST": "redis",
+        "REDIS_PORT": "6379"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:7098;http://localhost:5174",

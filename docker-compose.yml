@@ -17,6 +17,8 @@ services:
       - PRODUCTS_MICROSERVICE_HOST=productservice
       - PRODUCTS_MICROSERVICE_PORT=8080
       - PRODUCTS_MICROSERVICE_SCHEME=http
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     ports:
       - "7070:8080"
     restart: unless-stopped
@@ -104,6 +106,17 @@ services:
       - commercefabric-network
     depends_on:
       - mysql-productservice
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./Resources/docker/redis-data:/data
+    networks:
+      - commercefabric-network
     restart: unless-stopped
 
 networks:

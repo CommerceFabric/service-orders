@@ -80,5 +80,6 @@ namespace BusinessLogicLayer.HttpClients
                     "Error retrieving user"
                 );
             }
+        }
     }
 }

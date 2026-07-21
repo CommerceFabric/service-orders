@@ -38,6 +38,12 @@ namespace BusinessLogicLayer
             // Add custom services
             services.AddScoped<IOrdersService, OrdersService>();
 
+            // Add Redis cache
+            services.AddStackExchangeRedisCache(options =>
+            {
+                options.Configuration = $"{configuration["REDIS_HOST"]}:{configuration["REDIS_PORT"]}";
+            });
+
             return services;
         }
     }
