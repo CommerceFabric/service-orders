@@ -41,6 +41,7 @@ namespace BusinessLogicLayer.HttpClients
                 var response = await _httpClient.GetAsync($"api/products/search/product-id/{productID}");
 
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null; // if the product is not found, return null
+                else if (response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable) return await response.Content.ReadFromJsonAsync<ProductDTO>(); // if the products microservice is unavailable, return the fallback default product polly replaces its response with but skip caching
                 else if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Error retrieving product with ID {productID}: {response.ReasonPhrase}"); // if any other error occurs, throw an exception
                 var product = await response.Content.ReadFromJsonAsync<ProductDTO>();
 

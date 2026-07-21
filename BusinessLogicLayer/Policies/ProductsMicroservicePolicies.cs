@@ -28,9 +28,10 @@ namespace BusinessLogicLayer.Policies
 
         public IAsyncPolicy<HttpResponseMessage> GetFallbackPolicy()
         {
-            return Policy.HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode) // if request fails, apply fallback logic (effectively, intercepting the failed response and replacing it)...
+            return Policy.Handle<HttpRequestException>() // if the request fails due to a network error, apply fallback logic
+                .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode) // or if request fails, apply fallback logic (effectively, intercepting the failed response and replacing it)...
                 .FallbackAsync(
-                    (async(context) =>
+                    (async (context) =>
                     {
                         _logger.LogWarning("Fallback executed");
 
@@ -45,7 +46,7 @@ namespace BusinessLogicLayer.Policies
                         );
 
                         // store the fallback product in the context so it can be accessed later if needed
-                        return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                        return new HttpResponseMessage(System.Net.HttpStatusCode.ServiceUnavailable)
                         {
                             Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(product))
                         };
