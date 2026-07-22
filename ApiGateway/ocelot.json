@@ -112,7 +112,17 @@
         "POST",
         "PUT",
         "OPTIONS"
-      ]
+      ],
+      "QoSOptions": {
+        "ExceptionsAllowedBeforeBreaking": 3, // circuit breaker will open after 3 exceptions
+        "DurationOfBreak": 10000, // circuit breaker will stay open for 10 seconds, then will go to half-open state to test if the downstream service is healthy again
+        "TimeoutValue": 5000 // timeout for downstream service calls in milliseconds, so if the downstream service takes longer than 5 seconds to respond, Ocelot will consider it a failure and trigger the circuit breaker
+      },
+      "RetryOptions": {
+        "RetryCount": 3, // number of times to retry the downstream service call if it fails
+        "RetryBackOffPeriod": 2000, // time in milliseconds to wait before retrying the downstream service call
+        "RetryOnServerError": true // retry on server errors (5xx status codes)
+      }
     },
     {
       "UpstreamPathTemplate": "/gateway/Products/search/product-id/{productId}/",
