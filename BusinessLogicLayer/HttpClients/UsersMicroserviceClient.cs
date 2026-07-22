@@ -40,7 +40,7 @@ namespace BusinessLogicLayer.HttpClients
                 #endregion
 
                 #region if cache miss, get the user from the users microservice and cache it
-                var response = await _httpClient.GetAsync($"api/users/{userID}");
+                var response = await _httpClient.GetAsync($"gateway/Users/{userID}");
 
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null; // if the user is not found, return null
                                                                                             //else if (!response.IsSuccessStatusCode) throw new HttpRequestException($"Error retrieving user with ID {userID}: {response.ReasonPhrase}"); // if any other error occurs, throw an exception

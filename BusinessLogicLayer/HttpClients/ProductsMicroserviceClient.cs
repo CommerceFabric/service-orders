@@ -38,7 +38,7 @@ namespace BusinessLogicLayer.HttpClients
                 #region if cache miss, call the products microservice to get the product by productID
 
                 // call the products microservice to get the product by productID
-                var response = await _httpClient.GetAsync($"api/products/search/product-id/{productID}");
+                var response = await _httpClient.GetAsync($"gateway/Products/search/product-id/{productID}");
 
                 if (response.StatusCode == System.Net.HttpStatusCode.NotFound) return null; // if the product is not found, return null
                 else if (response.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable) return await response.Content.ReadFromJsonAsync<ProductDTO>(); // if the products microservice is unavailable, return the fallback default product polly replaces its response with but skip caching
