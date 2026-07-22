@@ -2,7 +2,7 @@
   "Routes": [
     // Orders microservice
     {
-      "UpstreamPathTemplate": "/gateway/Orders", // The path that clients send requests to on the API Gateway
+      "UpstreamPathTemplate": "/gateway/Orders/", // The path that clients send requests to on the API Gateway
       "DownstreamPathTemplate": "/api/Orders", // The path on the downstream Orders service that Ocelot forwards requests to
 
       "DownstreamScheme": "http", // The protocol Ocelot uses when connecting to the downstream service
@@ -19,7 +19,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Orders/search/orderid/{orderID}",
+      "UpstreamPathTemplate": "/gateway/Orders/search/orderid/{orderID}/",
       "DownstreamPathTemplate": "/api/Orders/search/orderid/{orderID}",
 
       "DownstreamScheme": "http",
@@ -34,7 +34,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Orders/search/productid/{productID}",
+      "UpstreamPathTemplate": "/gateway/Orders/search/productid/{productID}/",
       "DownstreamPathTemplate": "/api/Orders/search/productid/{productID}",
 
       "DownstreamScheme": "http",
@@ -49,7 +49,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Orders/search/userid/{userID}",
+      "UpstreamPathTemplate": "/gateway/Orders/search/userid/{userID}/",
       "DownstreamPathTemplate": "/api/Orders/search/userid/{userID}",
 
       "DownstreamScheme": "http",
@@ -64,7 +64,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Orders/search/orderdate/{orderDate}",
+      "UpstreamPathTemplate": "/gateway/Orders/search/orderdate/{orderDate}/",
       "DownstreamPathTemplate": "/api/Orders/search/orderdate/{orderDate}",
 
       "DownstreamScheme": "http",
@@ -79,7 +79,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Orders/{orderID}",
+      "UpstreamPathTemplate": "/gateway/Orders/{orderID}/",
       "DownstreamPathTemplate": "/api/Orders/{orderID}",
 
       "DownstreamScheme": "http",
@@ -97,7 +97,7 @@
 
     // Products microservice
     {
-      "UpstreamPathTemplate": "/gateway/Products",
+      "UpstreamPathTemplate": "/gateway/Products/",
       "DownstreamPathTemplate": "/api/Products",
 
       "DownstreamScheme": "http",
@@ -115,7 +115,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Products/search/product-id/{productId}",
+      "UpstreamPathTemplate": "/gateway/Products/search/product-id/{productId}/",
       "DownstreamPathTemplate": "/api/Products/search/product-id/{productId}",
 
       "DownstreamScheme": "http",
@@ -130,7 +130,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Products/search/category/{category}",
+      "UpstreamPathTemplate": "/gateway/Products/search/category/{category}/",
       "DownstreamPathTemplate": "/api/Products/search/category/{category}",
 
       "DownstreamScheme": "http",
@@ -145,7 +145,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Products/search/{query}",
+      "UpstreamPathTemplate": "/gateway/Products/search/{query}/",
       "DownstreamPathTemplate": "/api/Products/search/{query}",
 
       "DownstreamScheme": "http",
@@ -160,7 +160,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Products/{productId}",
+      "UpstreamPathTemplate": "/gateway/Products/{productId}/",
       "DownstreamPathTemplate": "/api/Products/{productId}",
 
       "DownstreamScheme": "http",
@@ -177,7 +177,7 @@
 
     // Users Microservice
     {
-      "UpstreamPathTemplate": "/gateway/Auth/register",
+      "UpstreamPathTemplate": "/gateway/Users/Auth/register/",
       "DownstreamPathTemplate": "/api/Auth/register",
 
       "DownstreamScheme": "http",
@@ -192,7 +192,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Auth/login",
+      "UpstreamPathTemplate": "/gateway/Users/Auth/login/",
       "DownstreamPathTemplate": "/api/Auth/login",
 
       "DownstreamScheme": "http",
@@ -207,7 +207,7 @@
       ]
     },
     {
-      "UpstreamPathTemplate": "/gateway/Users/{userID}",
+      "UpstreamPathTemplate": "/gateway/Users/{userID}/",
       "DownstreamPathTemplate": "/api/Users/{userID}",
 
       "DownstreamScheme": "http",
