@@ -16,7 +16,11 @@
         "GET",
         "POST",
         "OPTIONS"
-      ]
+      ],
+      "FileCacheOptions": {
+        "TtlSeconds": 5, // time in seconds to cache the response from the downstream service
+        "Region": "AllOrders"
+      }
     },
     {
       "UpstreamPathTemplate": "/gateway/Orders/search/orderid/{orderID}/",
@@ -133,8 +137,8 @@
         "ClientIdHeader": "ClientId" // the name of the header that clients must include in their requests to identify themselves for rate limiting purposes
       },
       "FileCacheOptions": {
-        "TtlSeconds": 30, // time in seconds to cache the response from the downstream service
-        "Region": ""
+        "TtlSeconds": 5, // time in seconds to cache the response from the downstream service
+        "Region": "AllProducts"
       } 
     },
     {
