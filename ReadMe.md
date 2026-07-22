@@ -99,6 +99,8 @@ This service uses a **Layered Architecture** pattern:
 * Exception Handling Middleware
 * Swagger / OpenAPI
 * MVC Controller based API endpoints
+* Redis Cache (for caching data from other microservices)
+* Ocelot (API Gateway)
 
 ## Design Notes
 
