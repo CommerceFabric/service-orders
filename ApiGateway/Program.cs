@@ -1,3 +1,4 @@
+using ApiGateway.Middleware;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
 using Ocelot.Provider.Polly;
@@ -24,6 +25,7 @@ var app = builder.Build();
 
 #region Configuring App
 app.UseCors();
+app.UseOcelotClientIdFallbackMiddleware(); // Use custom middleware to handle missing ClientId header in requests so anonymous requests can be made to the API Gateway without a ClientId header
 await app.UseOcelot(); // Use Ocelot middleware to handle requests
 #endregion
 

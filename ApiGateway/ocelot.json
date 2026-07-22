@@ -122,6 +122,15 @@
         "RetryCount": 3, // number of times to retry the downstream service call if it fails
         "RetryBackOffPeriod": 2000, // time in milliseconds to wait before retrying the downstream service call
         "RetryOnServerError": true // retry on server errors (5xx status codes)
+      },
+      "RateLimitOptions": { // set rate limit, eg 3 requests per client per minute (as determined via ClientId header in request) - requests exceeding this limit will receive a 429 Too Many Requests response, allowing requests again after the specified period
+        "Limit": 3,
+        "Period": "1m",
+        "HttpStatusCode": 429,
+        "EnableRateLimiting": true,
+        "PeriodTimespan": 30, // time in seconds for the rate limit period aka after 30 seconds the rate limit will reset and the client can make requests again
+        "ClientWhitelist": [], // optionally, you can specify a list of client IDs that are exempt from rate limiting. If you want to allow all clients, leave this list empty.
+        "ClientIdHeader": "ClientId" // the name of the header that clients must include in their requests to identify themselves for rate limiting purposes
       }
     },
     {
@@ -236,7 +245,10 @@
   ],
 
   "GlobalConfiguration": {
-    "BaseUrl": "https://localhost:4000" // The public base URL of the API Gateway
+    "BaseUrl": "https://localhost:4000", // The public base URL of the API Gateway
+    //"RateLimitOptions": {
+    //  "ClientIdHeader": "ClientId"
+    //}
   }
 
   /*
