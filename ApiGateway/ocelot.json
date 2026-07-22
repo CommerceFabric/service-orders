@@ -131,7 +131,11 @@
         "PeriodTimespan": 30, // time in seconds for the rate limit period aka after 30 seconds the rate limit will reset and the client can make requests again
         "ClientWhitelist": [], // optionally, you can specify a list of client IDs that are exempt from rate limiting. If you want to allow all clients, leave this list empty.
         "ClientIdHeader": "ClientId" // the name of the header that clients must include in their requests to identify themselves for rate limiting purposes
-      }
+      },
+      "FileCacheOptions": {
+        "TtlSeconds": 30, // time in seconds to cache the response from the downstream service
+        "Region": ""
+      } 
     },
     {
       "UpstreamPathTemplate": "/gateway/Products/search/product-id/{productId}/",
