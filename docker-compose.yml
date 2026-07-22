@@ -119,6 +119,16 @@ services:
       - commercefabric-network
     restart: unless-stopped
 
+  apigateway:
+    image: apigateway
+    build:
+      context: .
+      dockerfile: ApiGateway/Dockerfile
+    ports:
+      - "4000:8080"
+    networks:
+      - commercefabric-network
+
 networks:
   orders-mongodb-network:
     driver: bridge

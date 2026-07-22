@@ -1,3 +1,35 @@
 {
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/Orders", // The path on the downstream Orders service that Ocelot forwards requests to
+      "DownstreamScheme": "http", // The protocol Ocelot uses when connecting to the downstream service
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "ordersmicroservice.api", // The hostname of the downstream Orders service (e.g., a Docker Compose service name or DNS hostname)
+          "Port": 8080 // The port the downstream Orders service is listening on
+        }
+      ],
 
+      "UpstreamPathTemplate": "/gateway/Orders", // The path that clients send requests to on the API Gateway
+      "UpstreamHttpMethod": [ // The HTTP methods that Ocelot will accept for this route
+        "GET",
+        "POST",
+        "OPTIONS"
+      ]
+    }
+  ],
+
+  "GlobalConfiguration": {
+    "BaseUrl": "https://localhost:4000" // The public base URL of the API Gateway
+  }
+
+  /*
+    Example:
+
+    Client sends a request to:
+    https://localhost:5000/gateway/Orders
+
+    Ocelot forwards the request to:
+    http://ordersmicroservice.api:8080/api/Orders
+  */
 }
