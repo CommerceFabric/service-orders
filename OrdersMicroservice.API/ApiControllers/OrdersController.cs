@@ -154,13 +154,14 @@ namespace OrdersMicroservice.API.ApiControllers
         /// <param name="orderID">The ID of the order to delete</param>
         /// <returns>The deleted order</returns>
         [HttpDelete("{orderID}")]
-        public async Task<ActionResult<OrderResponse?>> DeleteOrder(Guid orderID)
+        public async Task<ActionResult> DeleteOrder(Guid orderID)
         {
             if (orderID == Guid.Empty) return BadRequest("Order ID in the URL cannot be empty.");
 
             var deletedOrder = await _ordersService.DeleteOrder(orderID);
-            if (deletedOrder == null) return NotFound($"Order with ID {orderID} not found.");
-            return Ok(deletedOrder);
+            if (!deletedOrder) return NotFound($"Order with ID {orderID} not found.");
+
+            return NoContent();
         }
     }
 }
