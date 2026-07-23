@@ -19,6 +19,10 @@ services:
       - PRODUCTS_MICROSERVICE_SCHEME=http
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASSWORD=admin
     ports:
       - "7070:8080"
     restart: unless-stopped
@@ -98,7 +102,11 @@ services:
       - COMMERCEFABRIC_PRODUCTSERVICE_DB_PORT=3306
       - COMMERCEFABRIC_PRODUCTSERVICE_DB_USER=root
       - COMMERCEFABRIC_PRODUCTSERVICE_DB_PASSWORD=admin
-      - COMMERCEFABRIC_PRODUCTSERVICE_DB_NAME=productService
+      - COMMERCEFABRIC_PRODUCTSERVICE_DB_NAME=productService 
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=admin
+      - RABBITMQ_PASSWORD=admin
     ports:
       - "6060:8080"
     networks:
@@ -128,6 +136,19 @@ services:
       - "4000:8080"
     networks:
       - commercefabric-network
+      
+  rabbitmq:
+    image: rabbitmq:4.3.3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=admin
+      - RABBITMQ_DEFAULT_PASS=admin
+    networks:
+      - commercefabric-network
+    restart: unless-stopped
 
 networks:
   orders-mongodb-network:
