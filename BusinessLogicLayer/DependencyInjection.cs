@@ -1,4 +1,5 @@
 ﻿using BusinessLogicLayer.Mappers;
+using BusinessLogicLayer.RabbitMQ;
 using BusinessLogicLayer.ServiceContracts;
 using BusinessLogicLayer.Services;
 using FluentValidation;
@@ -43,6 +44,10 @@ namespace BusinessLogicLayer
             {
                 options.Configuration = $"{configuration["REDIS_HOST"]}:{configuration["REDIS_PORT"]}";
             });
+
+            // Add RabbitMQ services
+            services.AddSingleton<IRabbitMQProductNameUpdateConsumer, RabbitMQProductNameUpdateConsumer>(); // singleton because we want to have only one instance of the consumer that will be used throughout the application
+            services.AddHostedService<RabbitMQProductNameUpdateHostedService>(); // hosted service because we want to run the consumer in the background and listen for messages from RabbitMQ
 
             return services;
         }
