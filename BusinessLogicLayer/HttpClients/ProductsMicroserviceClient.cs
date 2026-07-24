@@ -49,7 +49,6 @@ namespace BusinessLogicLayer.HttpClients
                 var cacheOptions = new DistributedCacheEntryOptions
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30), // set the cache expiration time (after this time, the cache entry will be removed)
-                    SlidingExpiration = TimeSpan.FromSeconds(10) // set the sliding expiration time (if the product is accessed again within this time, the cache expiration will be extended)
                 };
                 var serializedProduct = System.Text.Json.JsonSerializer.Serialize(product); // serialize the product to a string
                 await _distributedCache.SetStringAsync(cacheKey, serializedProduct, cacheOptions); // store the serialized product in the cache with the cache key and options
