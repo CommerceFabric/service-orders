@@ -37,7 +37,12 @@ namespace BusinessLogicLayer.RabbitMQ
             await EnsureConnectedAsync(); // Ensure that the channel is created and connected to RabbitMQ before consuming the message (has been lazy loaded)
 
             #region Declare Exchange, Queue, and Bindings
-            string routingKey = "product.delete"; // the routing key that they publisher uses for name updates
+            var headers = new Dictionary<string, object>
+            {
+                {"x-match", "all" }, // all headers must match for the message to be routed to the queue
+                { "event", "product.delete" },
+                { "RowCount", 1  }
+            };
             var exchangeName = _configuration["RABBITMQ_PRODUCTS_EXCHANGE"]!; // the name of the exchange to declare (eg products.exchange)
 
             // Declare the exchange
@@ -60,7 +65,8 @@ namespace BusinessLogicLayer.RabbitMQ
             await _channel!.QueueBindAsync(
                 queue: queueName, // the name of the queue to bind
                 exchange: exchangeName, // the name of the exchange to bind to
-                routingKey: routingKey // the routing key to use for binding
+                routingKey: string.Empty, // the routing key to use for binding (not needed for headers exchange, but still required by the method signature)
+                arguments: headers! // the headers to use for binding
             );
             #endregion
 

@@ -37,18 +37,24 @@ namespace BusinessLogicLayer.RabbitMQ
             await EnsureConnectedAsync(); // Ensure that the channel is created and connected to RabbitMQ before consuming the message (has been lazy loaded)
 
             #region Declare Exchange, Queue, and Bindings
-            string routingKey = "product.update.name"; // the routing key that they publisher uses for name updates
+            var headers = new Dictionary<string, object>
+            {
+                {"x-match", "all" }, // all headers must match for the message to be routed to the queue
+                { "event", "product.update" },
+                { "field", "name" },
+                { "RowCount", 1  }
+            };
             var exchangeName = _configuration["RABBITMQ_PRODUCTS_EXCHANGE"]!; // the name of the exchange to declare (eg products.exchange)
 
             // Declare the exchange
             await _channel!.ExchangeDeclareAsync(
                 exchange: exchangeName, // the name of the exchange to declare (eg products.exchange)
-                type: ExchangeType.Direct, // the type of the exchange (eg direct, fanout, topic, headers)
+                type: ExchangeType.Headers, // the type of the exchange (eg direct, fanout, topic, headers)
                 durable: true // exchange should survive a broker restart
             );
 
             // Declare the queue
-            string queueName = "orders.product.update.name.queue"; // the name of the queue to declare (eg syntax = <nameOfService>.<exchangeItIsConsuming>.queue)
+            string queueName = "orders.product.update.name.queue"; // the name of the queue to declare (eg syntax = <nameOfService>.<whatItIsConsuming>.queue)
             await _channel!.QueueDeclareAsync(
                 queue: queueName, // the name of the queue to declare
                 durable: true, // queue should survive a broker restart
@@ -60,7 +66,8 @@ namespace BusinessLogicLayer.RabbitMQ
             await _channel!.QueueBindAsync(
                 queue: queueName, // the name of the queue to bind
                 exchange: exchangeName, // the name of the exchange to bind to
-                routingKey: routingKey // the routing key to use for binding
+                routingKey: string.Empty, // the routing key to use for binding (not needed for headers exchange, but still required by the method signature)
+                arguments: headers! // the headers to use for binding (eg x-match, event, field, RowCount)
             );
             #endregion
 
