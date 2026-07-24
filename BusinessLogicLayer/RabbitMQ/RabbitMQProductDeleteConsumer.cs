@@ -48,7 +48,7 @@ namespace BusinessLogicLayer.RabbitMQ
             // Declare the exchange
             await _channel!.ExchangeDeclareAsync(
                 exchange: exchangeName, // the name of the exchange to declare (eg products.exchange)
-                type: ExchangeType.Direct, // the type of the exchange (eg direct, fanout, topic, headers)
+                type: ExchangeType.Headers, // the type of the exchange (eg direct, fanout, topic, headers)
                 durable: true // exchange should survive a broker restart
             );
 
@@ -77,25 +77,28 @@ namespace BusinessLogicLayer.RabbitMQ
             // Define the event handler for when a message is received
             AsyncEventHandler<BasicDeliverEventArgs> asyncEventHandler = async (sender, args) =>
             {
+                var body = args.Body.ToArray(); // get the message body that was published to RabbitMQ as a byte array
+                var message = Encoding.UTF8.GetString(body); // convert the byte array to a string using UTF-8 encoding
+
+                var productDeleteMessage = System.Text.Json.JsonSerializer.Deserialize<ProductDeleteMessage>(message); // deserialize the message to a ProductDeleteMessage object
+                if (productDeleteMessage == null) return;
+
                 try
-                {
-                    var body = args.Body.ToArray(); // get the message body that was published to RabbitMQ as a byte array
-                    var message = Encoding.UTF8.GetString(body); // convert the byte array to a string using UTF-8 encoding
-
-                    var productDeleteMessage = System.Text.Json.JsonSerializer.Deserialize<ProductDeleteMessage>(message); // deserialize the message to a ProductDeleteMessage object
-                    if (productDeleteMessage == null) return;
-
+                {   
+                    #region update the redis cache
                     // handle potential stale Redis cache for the product delete
                     var cacheKey = $"product:{productDeleteMessage?.ProductID}"; // create a cache key based on the productID
                     await _distributedCache.RemoveAsync(cacheKey); // invalidate the stale cache (if it exists) by removing the cache key from Redis
-                    _logger.LogInformation($"RabbitMQ Consumer received message, invalidated cache for: ProductID: {productDeleteMessage?.ProductID}");
+                    #endregion
+
+                    _logger.LogInformation($"RabbitMQ Consumer received delete message, invalidated cache for: ProductID: {productDeleteMessage?.ProductID}");
 
                     await _channel.BasicAckAsync(args.DeliveryTag, false);
                 }
                 catch (Exception ex)
                 {
                     // todo - should probably modify to something like: <retry 3 times -> add to dead letter exchange + some dead letter queue for special handling)
-                    _logger.LogError(ex, "Failed processing RabbitMQ message");
+                    _logger.LogError(ex, $"Failed processing RabbitMQ delete message for ProductID: {productDeleteMessage?.ProductID}");
 
                     await _channel.BasicNackAsync(args.DeliveryTag, false, true);
                 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using BusinessLogicLayer.DTO;
+using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
@@ -41,7 +42,6 @@ namespace BusinessLogicLayer.RabbitMQ
             {
                 {"x-match", "all" }, // all headers must match for the message to be routed to the queue
                 { "event", "product.update" },
-                { "field", "name" },
                 { "RowCount", 1  }
             };
             var exchangeName = _configuration["RABBITMQ_PRODUCTS_EXCHANGE"]!; // the name of the exchange to declare (eg products.exchange)
@@ -78,25 +78,36 @@ namespace BusinessLogicLayer.RabbitMQ
             // Define the event handler for when a message is received
             AsyncEventHandler<BasicDeliverEventArgs> asyncEventHandler = async (sender, args) =>
             {
+                var body = args.Body.ToArray(); // get the message body that was published to RabbitMQ as a byte array
+                var message = Encoding.UTF8.GetString(body); // convert the byte array to a string using UTF-8 encoding
+
+                var updatedProduct = System.Text.Json.JsonSerializer.Deserialize<ProductDTO>(message); // deserialize the message to a ProductDTO object
+                if (updatedProduct == null) return;
+
                 try
                 {
-                    var body = args.Body.ToArray(); // get the message body that was published to RabbitMQ as a byte array
-                    var message = Encoding.UTF8.GetString(body); // convert the byte array to a string using UTF-8 encoding
-                
-                    var productUpdateMessage = System.Text.Json.JsonSerializer.Deserialize<ProductNameUpdateMessage>(message); // deserialize the message to a ProductNameUpdateMessage object
-                    if (productUpdateMessage == null) return;
-
+                    #region update the redis cache
                     // handle potential stale Redis cache for the product name update
-                    var cacheKey = $"product:{productUpdateMessage?.ProductID}"; // create a cache key based on the productID
-                    await _distributedCache.RemoveAsync(cacheKey); // invalidate the stale cache (if it exists) by removing the cache key from Redis
-                    _logger.LogInformation($"RabbitMQ Consumer received message, invalidated cache for: ProductID: {productUpdateMessage?.ProductID}, OldProductName: {productUpdateMessage?.OldProductName}, NewProductName: {productUpdateMessage?.NewProductName}");
+                    var cacheKey = $"product:{updatedProduct?.ProductID}"; // create a cache key based on the productID
+                    var serializedProduct = System.Text.Json.JsonSerializer.Serialize(updatedProduct); // serialize the updated cached product to a string
+
+                    // define the cache options for the updated cached product, including the absolute expiration time and sliding expiration time
+                    var cacheOptions = new DistributedCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30), // set the cache expiration time (after this time, the cache entry will be removed)
+                        SlidingExpiration = TimeSpan.FromSeconds(10) // set the sliding expiration time (if the product is accessed again within this time, the cache expiration will be extended)
+                    };
+                    await _distributedCache.SetStringAsync(cacheKey, serializedProduct, cacheOptions); // store the serialized product in the cache with the cache key and options     
+                    #endregion
+
+                    _logger.LogInformation($"RabbitMQ Consumer received update message, updated cache for: ProductID: {updatedProduct?.ProductID} ({updatedProduct?.ProductName})");
                     
                     await _channel.BasicAckAsync(args.DeliveryTag, false);
                 }
                 catch(Exception ex)
                 {
                     // todo - should probably modify to something like: <retry 3 times -> add to dead letter exchange + some dead letter queue for special handling)
-                    _logger.LogError(ex, "Failed processing RabbitMQ message");
+                    _logger.LogError(ex, $"Failed processing RabbitMQ update message for ProductID: {updatedProduct?.ProductID} ({updatedProduct?.ProductName})");
 
                     await _channel.BasicNackAsync(args.DeliveryTag, false, true);
                 }
