@@ -1,19 +1,26 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Events;
 using System.Text;
 
 namespace BusinessLogicLayer.RabbitMQ
 {
     public class RabbitMQProductNameUpdateConsumer : IDisposable, IRabbitMQProductNameUpdateConsumer
     {
+        #region Dependencies
         private readonly IConfiguration _configuration;
+        private readonly ILogger<RabbitMQProductNameUpdateConsumer> _logger;
+        #endregion
+
         private IChannel? _channel;
         private IConnection? _connection;
         private readonly SemaphoreSlim _lock = new(1, 1); // Semaphore to ensure thread safety when creating the channel (has 1 permit, so only one thread can enter at a time)
 
-        public RabbitMQProductNameUpdateConsumer(IConfiguration configuration)
+        public RabbitMQProductNameUpdateConsumer(IConfiguration configuration, ILogger<RabbitMQProductNameUpdateConsumer> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
 
         public void Dispose()
@@ -26,6 +33,7 @@ namespace BusinessLogicLayer.RabbitMQ
         {
             await EnsureConnectedAsync(); // Ensure that the channel is created and connected to RabbitMQ before consuming the message (has been lazy loaded)
 
+            #region Declare Exchange, Queue, and Bindings
             string routingKey = "product.update.name"; // the routing key that they publisher uses for name updates
             var exchangeName = _configuration["RABBITMQ_PRODUCTS_EXCHANGE"]!; // the name of the exchange to declare (eg products.exchange)
 
@@ -51,6 +59,33 @@ namespace BusinessLogicLayer.RabbitMQ
                 exchange: exchangeName, // the name of the exchange to bind to
                 routingKey: routingKey // the routing key to use for binding
             );
+            #endregion
+
+            #region Handle Message Consumption Events
+            // Create a new consumer to handle the message delivery confirmation
+            var consumer = new AsyncEventingBasicConsumer(_channel!);
+
+            // Define the event handler for when a message is received
+            AsyncEventHandler<BasicDeliverEventArgs> asyncEventHandler = (sender, args) =>
+            {
+                var body = args.Body.ToArray(); // get the message body that was published to RabbitMQ as a byte array
+                var message = Encoding.UTF8.GetString(body); // convert the byte array to a string using UTF-8 encoding
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    var productUpdateMessage = System.Text.Json.JsonSerializer.Deserialize<ProductNameUpdateMessage>(message); // deserialize the message to a ProductNameUpdateMessage object
+                    _logger.LogInformation($"RabbitMQ Consumer received message: ProductID: {productUpdateMessage?.ProductID}, OldProductName: {productUpdateMessage?.OldProductName}, NewProductName: {productUpdateMessage?.NewProductName}");
+                }
+                return Task.CompletedTask; // return a completed task to indicate that the message has been processed
+            };
+            consumer!.ReceivedAsync += asyncEventHandler;
+
+            // Start consuming messages from the queue with the specified routing key and consumer
+            await _channel!.BasicConsumeAsync(
+                queue: routingKey, // the name of the queue to consume from (eg product.created, product.updated, etc.)
+                autoAck: true, // automatically acknowledge the message delivery
+                consumer: consumer // the consumer to handle the message delivery confirmation
+            );
+            #endregion
         }
 
         /// <summary>
