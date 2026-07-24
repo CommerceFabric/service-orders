@@ -23,6 +23,7 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=admin
       - RABBITMQ_PASSWORD=admin
+      - RABBITMQ_PRODUCTS_EXCHANGE=products.exchange
     ports:
       - "7070:8080"
     restart: unless-stopped
@@ -107,6 +108,7 @@ services:
       - RABBITMQ_PORT=5672
       - RABBITMQ_USER=admin
       - RABBITMQ_PASSWORD=admin
+      - RABBITMQ_PRODUCTS_EXCHANGE=products.exchange
     ports:
       - "6060:8080"
     networks:
