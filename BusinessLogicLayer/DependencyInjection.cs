@@ -48,6 +48,8 @@ namespace BusinessLogicLayer
             // Add RabbitMQ services
             services.AddSingleton<IRabbitMQProductNameUpdateConsumer, RabbitMQProductNameUpdateConsumer>(); // singleton because we want to have only one instance of the consumer that will be used throughout the application
             services.AddHostedService<RabbitMQProductNameUpdateHostedService>(); // hosted service because we want to run the consumer in the background and listen for messages from RabbitMQ
+            services.AddSingleton<IRabbitMQProductDeleteConsumer, RabbitMQProductDeleteConsumer>(); // singleton because we want to have only one instance of the consumer that will be used throughout the application
+            services.AddHostedService<RabbitMQProductDeleteHostedService>(); // hosted service because we want to run the consumer in the background and listen for messages from RabbitMQ
 
             return services;
         }
