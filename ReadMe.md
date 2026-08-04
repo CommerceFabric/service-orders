@@ -6,16 +6,41 @@
 
 ## Running through docker
 
-If you have made code changes, you should rebuild and push the Docker image before running the docker-compose file.
+If you have made code changes, you should rebuild and push the Docker images before running the docker-compose file.
 
-1. Build microservice image
+1. Build microservice images
+
+Build the Orders microservice:
+
 ```bash
 docker build -t danielmusselwhite/commercefabric_order_microservice:1.0.0 -f .\OrdersMicroservice.API\Dockerfile .
 ```
 
+Build the ApiGateway:
+
+```bash
+docker build -t danielmusselwhite/commercefabric_api_gateway:1.0.0 -f .\ApiGateway\Dockerfile .
+```
+
 2. Push to Docker Hub
+
+Push the Orders microservice:
+
 ```bash
 docker push danielmusselwhite/commercefabric_order_microservice:1.0.0
+```
+
+Push the ApiGateway:
+
+```bash
+docker push danielmusselwhite/commercefabric_api_gateway:1.0.0
+```
+
+The following Dockerfile is therefore expected to be pushed to the corresponding Docker Hub image:
+
+```text
+ApiGateway\Dockerfile
+    -> danielmusselwhite/commercefabric_api_gateway:1.0.0
 ```
 
 ### Running docker-compose
@@ -61,7 +86,6 @@ use OrdersDb
 show collections
 db.orders.find()
 ```
-
 
 ## Technical Info
 
