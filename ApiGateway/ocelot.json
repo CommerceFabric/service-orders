@@ -8,7 +8,7 @@
       "DownstreamScheme": "http", // The protocol Ocelot uses when connecting to the downstream service
       "DownstreamHostAndPorts": [
         {
-          "Host": "ordersmicroservice.api", // The hostname of the downstream Orders service (e.g., a Docker Compose service name or DNS hostname)
+          "Host": "orders-microservice", // The hostname of the downstream Orders service (e.g., a Docker Compose service name or DNS hostname)
           "Port": 8080 // The port the downstream Orders service is listening on
         }
       ],
@@ -29,7 +29,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "ordersmicroservice.api",
+          "Host": "orders-microservice",
           "Port": 8080
         }
       ],
@@ -44,7 +44,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "ordersmicroservice.api",
+          "Host": "orders-microservice",
           "Port": 8080
         }
       ],
@@ -59,7 +59,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "ordersmicroservice.api",
+          "Host": "orders-microservice",
           "Port": 8080
         }
       ],
@@ -74,7 +74,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "ordersmicroservice.api",
+          "Host": "orders-microservice",
           "Port": 8080
         }
       ],
@@ -89,7 +89,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "ordersmicroservice.api",
+          "Host": "orders-microservice",
           "Port": 8080
         }
       ],
@@ -107,7 +107,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "productservice",
+          "Host": "products-microservice",
           "Port": 8080
         }
       ],
@@ -148,7 +148,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "productservice",
+          "Host": "products-microservice",
           "Port": 8080
         }
       ],
@@ -163,7 +163,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "productservice",
+          "Host": "products-microservice",
           "Port": 8080
         }
       ],
@@ -178,7 +178,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "productservice",
+          "Host": "products-microservice",
           "Port": 8080
         }
       ],
@@ -193,7 +193,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "productservice",
+          "Host": "products-microservice",
           "Port": 8080
         }
       ],
@@ -210,7 +210,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "userservice",
+          "Host": "users-microservice",
           "Port": 8080
         }
       ],
@@ -225,7 +225,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "userservice",
+          "Host": "users-microservice",
           "Port": 8080
         }
       ],
@@ -240,7 +240,7 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "userservice",
+          "Host": "users-microservice",
           "Port": 8080
         }
       ],
@@ -266,6 +266,6 @@
     https://localhost:5000/gateway/Orders
 
     Ocelot forwards the request to:
-    http://ordersmicroservice.api:8080/api/Orders
+    http://orders-microservice:8080/api/Orders
   */
 }

@@ -34,7 +34,7 @@ services:
       - mongodb-orderservice
 
   mongodb-orderservice:
-    image: mongo
+    image: mongo:8.3.7
     container_name: mongodb-orderservice
     ports:
       - "27017:27017"
@@ -119,7 +119,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:latest
+    image: redis:8.10.0
     container_name: redis
     ports:
       - "6379:6379"
