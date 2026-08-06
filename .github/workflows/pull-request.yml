@@ -21,7 +21,7 @@ jobs:
           dotnet-version: "10.0.x"
 
       - name: Restore dependencies
-        run: dotnet restore
+        run: dotnet restore OrdersServiceTests/OrdersServiceTests.csproj
 
       - name: Run tests
-        run: dotnet test --no-restore --verbosity normal
+        run: dotnet test OrdersServiceTests/OrdersServiceTests.csproj --no-restore --verbosity normal
