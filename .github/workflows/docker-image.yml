@@ -105,3 +105,25 @@ jobs:
         run: |
           docker push $DOCKERHUB_IMAGE_NAME:$ORDER_VERSION
           docker push $DOCKERHUB_IMAGE_NAME:latest
+
+      # ==========================================
+      # Above did the CI part (it built and pushed the Docker image). Now we do the CD part (deploy to AKS).
+      # Trigger AKS deployment via the infra-platform repository which is responsible for the CD.
+      # ==========================================
+      - name: Trigger AKS deployment
+
+        uses: peter-evans/repository-dispatch@v3
+
+        with:
+
+          token: ${{ secrets.GH_PAT }}
+
+          repository: CommerceFabric/infra-platform
+
+          event-type: deploy-orders
+
+          client-payload: |
+            {
+              "service": "orders",
+              "image_tag": "${{ env.ORDER_VERSION }}"
+            }
