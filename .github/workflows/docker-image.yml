@@ -1,0 +1,107 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ACR_LOGIN_SERVER: commercefabricregistry.azurecr.io
+  ACR_IMAGE_NAME: orders-microservice
+  DOCKERHUB_IMAGE_NAME: danielmusselwhite/commercefabric_order_microservice
+
+jobs:
+
+  # ==========================================
+  # Run tests
+  # ==========================================
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run tests
+        run: dotnet test --no-restore --verbosity normal
+
+
+  # ==========================================
+  # Build and push Docker images
+  # ==========================================
+  build:
+    runs-on: ubuntu-latest
+
+    # Only run this job if the test job succeeds
+    needs: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Use the full Git commit SHA as the Docker image version.
+      # This makes every image uniquely traceable to the source commit.
+      - name: Set order version
+        run: echo "ORDER_VERSION=${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+      # ==========================================
+      # Azure
+      # ==========================================
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        run: az acr login --name commercefabricregistry
+
+      # ==========================================
+      # Docker Hub
+      # ==========================================
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # ==========================================
+      # Build
+      # ==========================================
+      - name: Build Docker image
+        run: |
+          docker build \
+            --file CommerceFabric.API/Dockerfile \
+            --tag $ACR_LOGIN_SERVER/$ACR_IMAGE_NAME:$ORDER_VERSION \
+            --tag $ACR_LOGIN_SERVER/$ACR_IMAGE_NAME:latest \
+            --tag $DOCKERHUB_IMAGE_NAME:$ORDER_VERSION \
+            --tag $DOCKERHUB_IMAGE_NAME:latest \
+            .
+            
+      # ==========================================
+      # Push to Azure Container Registry
+      # ==========================================
+      - name: Push to Azure Container Registry
+        run: |
+          docker push $ACR_LOGIN_SERVER/$ACR_IMAGE_NAME:$ORDER_VERSION
+          docker push $ACR_LOGIN_SERVER/$ACR_IMAGE_NAME:latest
+
+      # ==========================================
+      # Push to Docker Hub
+      # ==========================================
+      - name: Push to Docker Hub
+        run: |
+          docker push $DOCKERHUB_IMAGE_NAME:$ORDER_VERSION
+          docker push $DOCKERHUB_IMAGE_NAME:latest
