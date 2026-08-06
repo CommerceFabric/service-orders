@@ -10,8 +10,13 @@ permissions:
 
 env:
   ACR_LOGIN_SERVER: commercefabricregistry.azurecr.io
-  ACR_IMAGE_NAME: orders-microservice
-  DOCKERHUB_IMAGE_NAME: danielmusselwhite/commercefabric_order_microservice
+
+  ORDERS_IMAGE_NAME: orders-microservice
+  ORDERS_DOCKERHUB_IMAGE_NAME: danielmusselwhite/commercefabric_order_microservice
+
+  APIGATEWAY_IMAGE_NAME: apigateway
+  APIGATEWAY_DOCKERHUB_IMAGE_NAME: danielmusselwhite/commercefabric_apigateway
+
 
 jobs:
 
@@ -52,8 +57,9 @@ jobs:
 
       # Use the full Git commit SHA as the Docker image version.
       # This makes every image uniquely traceable to the source commit.
-      - name: Set order version
-        run: echo "ORDER_VERSION=${GITHUB_SHA}" >> "$GITHUB_ENV"
+      - name: Set versions
+        run: echo "IMAGE_VERSION=${GITHUB_SHA}" >> "$GITHUB_ENV"
+
 
       # ==========================================
       # Azure
@@ -78,52 +84,79 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       # ==========================================
-      # Build
+      # Build Orders Service
       # ==========================================
-      - name: Build Docker image
+      - name: Build Orders image
         run: |
           docker build \
             --file OrdersMicroservice.API/Dockerfile \
-            --tag $ACR_LOGIN_SERVER/$ACR_IMAGE_NAME:$ORDER_VERSION \
-            --tag $ACR_LOGIN_SERVER/$ACR_IMAGE_NAME:latest \
-            --tag $DOCKERHUB_IMAGE_NAME:$ORDER_VERSION \
-            --tag $DOCKERHUB_IMAGE_NAME:latest \
+            --tag $ACR_LOGIN_SERVER/$ORDERS_IMAGE_NAME:$IMAGE_VERSION \
+            --tag $ACR_LOGIN_SERVER/$ORDERS_IMAGE_NAME:latest \
+            --tag $ORDERS_DOCKERHUB_IMAGE_NAME:$IMAGE_VERSION \
+            --tag $ORDERS_DOCKERHUB_IMAGE_NAME:latest \
             .
-            
-      # ==========================================
-      # Push to Azure Container Registry
-      # ==========================================
-      - name: Push to Azure Container Registry
-        run: |
-          docker push $ACR_LOGIN_SERVER/$ACR_IMAGE_NAME:$ORDER_VERSION
-          docker push $ACR_LOGIN_SERVER/$ACR_IMAGE_NAME:latest
+
 
       # ==========================================
-      # Push to Docker Hub
+      # Build API Gateway
       # ==========================================
-      - name: Push to Docker Hub
+      - name: Build API Gateway image
         run: |
-          docker push $DOCKERHUB_IMAGE_NAME:$ORDER_VERSION
-          docker push $DOCKERHUB_IMAGE_NAME:latest
+          docker build \
+            --file ApiGateway/Dockerfile \
+            --tag $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:$IMAGE_VERSION \
+            --tag $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:latest \
+            --tag $APIGATEWAY_DOCKERHUB_IMAGE_NAME:$IMAGE_VERSION \
+            --tag $APIGATEWAY_DOCKERHUB_IMAGE_NAME:latest \
+            .
+
+      # ==========================================
+      # Push Azure Container Registry
+      # ==========================================
+      - name: Push images to Azure Container Registry
+        run: |
+          docker push $ACR_LOGIN_SERVER/$ORDERS_IMAGE_NAME:$IMAGE_VERSION
+          docker push $ACR_LOGIN_SERVER/$ORDERS_IMAGE_NAME:latest
+
+          docker push $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:$IMAGE_VERSION
+          docker push $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:latest
+
+      # ==========================================
+      # Push Docker Hub
+      # ==========================================
+      - name: Push images to Docker Hub
+        run: |
+          docker push $ORDERS_DOCKERHUB_IMAGE_NAME:$IMAGE_VERSION
+          docker push $ORDERS_DOCKERHUB_IMAGE_NAME:latest
+
+          docker push $APIGATEWAY_DOCKERHUB_IMAGE_NAME:$IMAGE_VERSION
+          docker push $APIGATEWAY_DOCKERHUB_IMAGE_NAME:latest
+
 
       # ==========================================
       # Above did the CI part (it built and pushed the Docker image). Now we do the CD part (deploy to AKS).
       # Trigger AKS deployment via the infra-platform repository which is responsible for the CD.
       # ==========================================
-      - name: Trigger AKS deployment
-
+      - name: Trigger Orders deployment
         uses: peter-evans/repository-dispatch@v3
-
         with:
-
           token: ${{ secrets.GH_PAT }}
-
           repository: CommerceFabric/infra-platform
-
           event-type: deploy-orders
-
           client-payload: |
             {
               "service": "orders",
-              "image_tag": "${{ env.ORDER_VERSION }}"
+              "image_tag": "${{ env.IMAGE_VERSION }}"
+            }
+
+      - name: Trigger API Gateway deployment
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+          repository: CommerceFabric/infra-platform
+          event-type: deploy-apigateway
+          client-payload: |
+            {
+              "service": "apigateway",
+              "image_tag": "${{ env.IMAGE_VERSION }}"
             }
