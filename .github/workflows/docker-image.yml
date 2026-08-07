@@ -21,9 +21,85 @@ env:
 jobs:
 
   # ==========================================
-  # Run tests
+  # Detect which services have changed
   # ==========================================
-  test:
+
+  changes:
+    runs-on: ubuntu-latest
+
+    outputs:
+      orders: ${{ steps.filter.outputs.orders }}
+      orders_tests: ${{ steps.filter.outputs.orders_tests }}
+      apigateway: ${{ steps.filter.outputs.apigateway }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect changed services
+        uses: dorny/paths-filter@v4
+        id: filter
+        with:
+          filters: |
+            # ==========================================
+            # Orders production dependencies
+            #
+            # A change to any of these means the Orders
+            # Docker image needs to be rebuilt/deployed.
+            # ==========================================
+            orders:
+              - 'OrdersMicroservice.API/**'
+              - 'BusinessLogicLayer/**'
+              - 'DataAccessLayer/**'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'Directory.Packages.props'
+              - 'global.json'
+              - 'NuGet.config'
+
+            # ==========================================
+            # Orders test dependencies
+            #
+            # Includes all production dependencies plus
+            # the Orders test project itself.
+            #
+            # Changing tests runs the tests, but does not
+            # cause a production deployment.
+            # ==========================================
+            orders_tests:
+              - 'OrdersMicroservice.API/**'
+              - 'BusinessLogicLayer/**'
+              - 'DataAccessLayer/**'
+              - 'OrdersServiceTests/**'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'Directory.Packages.props'
+              - 'global.json'
+              - 'NuGet.config'
+
+            # ==========================================
+            # API Gateway dependencies
+            # ==========================================
+            apigateway:
+              - 'ApiGateway/**'
+              - 'Directory.Build.props'
+              - 'Directory.Build.targets'
+              - 'Directory.Packages.props'
+              - 'global.json'
+              - 'NuGet.config'
+
+
+  # ==========================================
+  # Run Orders tests
+  # ==========================================
+
+  test-orders:
+    needs: changes
+
+    # Only run the Orders tests if Orders code,
+    # one of its dependencies, or its tests changed.
+    if: needs.changes.outputs.orders_tests == 'true'
+
     runs-on: ubuntu-latest
 
     steps:
@@ -39,17 +115,34 @@ jobs:
         run: dotnet restore OrdersServiceTests/OrdersServiceTests.csproj
 
       - name: Run tests
-        run: dotnet test OrdersServiceTests/OrdersServiceTests.csproj --no-restore --verbosity normal
+        run: |
+          dotnet test \
+            OrdersServiceTests/OrdersServiceTests.csproj \
+            --no-restore \
+            --verbosity normal
 
 
   # ==========================================
-  # Build and push Docker images
+  # Build, push and deploy Orders Service
   # ==========================================
-  build:
+
+  deploy-orders:
+    needs:
+      - changes
+      - test-orders
+
+    # Run if:
+    #   1. Orders production code/dependencies changed
+    #   2. Orders tests passed
+    #
+    # "always()" is required because test-orders may be
+    # skipped when Orders itself has not changed.
+    if: |
+      always() &&
+      needs.changes.outputs.orders == 'true' &&
+      needs.test-orders.result == 'success'
+
     runs-on: ubuntu-latest
-
-    # Only run this job if the test job succeeds
-    needs: test
 
     steps:
       - name: Checkout
@@ -57,13 +150,14 @@ jobs:
 
       # Use the full Git commit SHA as the Docker image version.
       # This makes every image uniquely traceable to the source commit.
-      - name: Set versions
+      - name: Set version
         run: echo "IMAGE_VERSION=${GITHUB_SHA}" >> "$GITHUB_ENV"
 
 
       # ==========================================
       # Azure
       # ==========================================
+
       - name: Log in to Azure
         uses: azure/login@v2
         with:
@@ -74,18 +168,22 @@ jobs:
       - name: Log in to Azure Container Registry
         run: az acr login --name commercefabricregistry
 
+
       # ==========================================
       # Docker Hub
       # ==========================================
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+
       # ==========================================
       # Build Orders Service
       # ==========================================
+
       - name: Build Orders image
         run: |
           docker build \
@@ -98,45 +196,32 @@ jobs:
 
 
       # ==========================================
-      # Build API Gateway
+      # Push Orders to Azure Container Registry
       # ==========================================
-      - name: Build API Gateway image
-        run: |
-          docker build \
-            --file ApiGateway/Dockerfile \
-            --tag $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:$IMAGE_VERSION \
-            --tag $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:latest \
-            --tag $APIGATEWAY_DOCKERHUB_IMAGE_NAME:$IMAGE_VERSION \
-            --tag $APIGATEWAY_DOCKERHUB_IMAGE_NAME:latest \
-            .
 
-      # ==========================================
-      # Push Azure Container Registry
-      # ==========================================
-      - name: Push images to Azure Container Registry
+      - name: Push Orders image to Azure Container Registry
         run: |
           docker push $ACR_LOGIN_SERVER/$ORDERS_IMAGE_NAME:$IMAGE_VERSION
           docker push $ACR_LOGIN_SERVER/$ORDERS_IMAGE_NAME:latest
 
-          docker push $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:$IMAGE_VERSION
-          docker push $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:latest
 
       # ==========================================
-      # Push Docker Hub
+      # Push Orders to Docker Hub
       # ==========================================
-      - name: Push images to Docker Hub
+
+      - name: Push Orders image to Docker Hub
         run: |
           docker push $ORDERS_DOCKERHUB_IMAGE_NAME:$IMAGE_VERSION
           docker push $ORDERS_DOCKERHUB_IMAGE_NAME:latest
 
-          docker push $APIGATEWAY_DOCKERHUB_IMAGE_NAME:$IMAGE_VERSION
-          docker push $APIGATEWAY_DOCKERHUB_IMAGE_NAME:latest
-
 
       # ==========================================
-      # Above did the CI part (it built and pushed the Docker image). Now we do the CD part (deploy to AKS).
-      # Trigger AKS deployment via the infra-platform repository which is responsible for the CD.
+      # CI complete - trigger CD for Orders
+      #
+      # The infra-platform repository is responsible
+      # for deploying the new image to AKS.
       # ==========================================
+
       - name: Trigger Orders deployment
         uses: peter-evans/repository-dispatch@v3
         with:
@@ -148,6 +233,98 @@ jobs:
               "service": "orders",
               "image_tag": "${{ env.IMAGE_VERSION }}"
             }
+
+
+  # ==========================================
+  # Build, push and deploy API Gateway
+  # ==========================================
+
+  deploy-apigateway:
+    needs: changes
+
+    # Only build/deploy API Gateway when its files
+    # or one of its shared build dependencies changed.
+    if: needs.changes.outputs.apigateway == 'true'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Use the full Git commit SHA as the Docker image version.
+      # This makes every image uniquely traceable to the source commit.
+      - name: Set version
+        run: echo "IMAGE_VERSION=${GITHUB_SHA}" >> "$GITHUB_ENV"
+
+
+      # ==========================================
+      # Azure
+      # ==========================================
+
+      - name: Log in to Azure
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Log in to Azure Container Registry
+        run: az acr login --name commercefabricregistry
+
+
+      # ==========================================
+      # Docker Hub
+      # ==========================================
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+
+      # ==========================================
+      # Build API Gateway
+      # ==========================================
+
+      - name: Build API Gateway image
+        run: |
+          docker build \
+            --file ApiGateway/Dockerfile \
+            --tag $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:$IMAGE_VERSION \
+            --tag $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:latest \
+            --tag $APIGATEWAY_DOCKERHUB_IMAGE_NAME:$IMAGE_VERSION \
+            --tag $APIGATEWAY_DOCKERHUB_IMAGE_NAME:latest \
+            .
+
+
+      # ==========================================
+      # Push API Gateway to Azure Container Registry
+      # ==========================================
+
+      - name: Push API Gateway image to Azure Container Registry
+        run: |
+          docker push $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:$IMAGE_VERSION
+          docker push $ACR_LOGIN_SERVER/$APIGATEWAY_IMAGE_NAME:latest
+
+
+      # ==========================================
+      # Push API Gateway to Docker Hub
+      # ==========================================
+
+      - name: Push API Gateway image to Docker Hub
+        run: |
+          docker push $APIGATEWAY_DOCKERHUB_IMAGE_NAME:$IMAGE_VERSION
+          docker push $APIGATEWAY_DOCKERHUB_IMAGE_NAME:latest
+
+
+      # ==========================================
+      # CI complete - trigger CD for API Gateway
+      #
+      # The infra-platform repository is responsible
+      # for deploying the new image to AKS.
+      # ==========================================
 
       - name: Trigger API Gateway deployment
         uses: peter-evans/repository-dispatch@v3
