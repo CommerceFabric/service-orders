@@ -204,37 +204,7 @@
 
     // Users Microservice
     {
-      "UpstreamPathTemplate": "/gateway/Users/Auth/register/",
-      "DownstreamPathTemplate": "/api/Auth/register",
-
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "users-microservice",
-          "Port": 8080
-        }
-      ],
-      "UpstreamHttpMethod": [
-        "POST"
-      ]
-    },
-    {
-      "UpstreamPathTemplate": "/gateway/Users/Auth/login/",
-      "DownstreamPathTemplate": "/api/Auth/login",
-
-      "DownstreamScheme": "http",
-      "DownstreamHostAndPorts": [
-        {
-          "Host": "users-microservice",
-          "Port": 8080
-        }
-      ],
-      "UpstreamHttpMethod": [
-        "POST"
-      ]
-    },
-    {
-      "UpstreamPathTemplate": "/gateway/Users/{userID}/",
+      "UpstreamPathTemplate": "/gateway/Users/{userID}",
       "DownstreamPathTemplate": "/api/Users/{userID}",
 
       "DownstreamScheme": "http",
@@ -245,7 +215,8 @@
         }
       ],
       "UpstreamHttpMethod": [
-        "GET"
+        "GET",
+        "PUT"
       ]
     }
 
