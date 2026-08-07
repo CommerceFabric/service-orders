@@ -128,7 +128,7 @@
         "RetryOnServerError": true // retry on server errors (5xx status codes)
       },
       "RateLimitOptions": { // set rate limit, eg 3 requests per client per minute (as determined via ClientId header in request) - requests exceeding this limit will receive a 429 Too Many Requests response, allowing requests again after the specified period
-        "Limit": 3,
+        "Limit": 10,
         "Period": "1m",
         "HttpStatusCode": 429,
         "EnableRateLimiting": true,

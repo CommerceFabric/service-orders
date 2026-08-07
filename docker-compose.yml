@@ -60,7 +60,7 @@ services:
     restart: unless-stopped
 
   userservice:
-    image: danielmusselwhite/commercefabric_user_microservice:1.0.0
+    image: danielmusselwhite/commercefabric_user_microservice:latest
     container_name: userservice
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -94,7 +94,7 @@ services:
     restart: unless-stopped
 
   productservice:
-    image: danielmusselwhite/commercefabric_product_microservice:1.0.0
+    image: danielmusselwhite/commercefabric_product_microservice:latest
     container_name: productservice
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
