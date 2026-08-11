@@ -1,5 +1,7 @@
-﻿using BusinessLogicLayer.Mappers;
+﻿using Azure.Messaging.ServiceBus;
+using BusinessLogicLayer.Mappers;
 using BusinessLogicLayer.RabbitMQ;
+using BusinessLogicLayer.ServiceBus;
 using BusinessLogicLayer.ServiceContracts;
 using BusinessLogicLayer.Services;
 using FluentValidation;
@@ -46,10 +48,23 @@ namespace BusinessLogicLayer
             });
 
             // Add RabbitMQ services
-            services.AddSingleton<IRabbitMQProductNameUpdateConsumer, RabbitMQProductNameUpdateConsumer>(); // singleton because we want to have only one instance of the consumer that will be used throughout the application
-            services.AddHostedService<RabbitMQProductNameUpdateHostedService>(); // hosted service because we want to run the consumer in the background and listen for messages from RabbitMQ
+            services.AddSingleton<IRabbitMQProductNameUpdateConsumer, RabbitMQProductUpdateConsumer>(); // singleton because we want to have only one instance of the consumer that will be used throughout the application
+            services.AddHostedService<RabbitMQProductUpdateHostedService>(); // hosted service because we want to run the consumer in the background and listen for messages from RabbitMQ
             services.AddSingleton<IRabbitMQProductDeleteConsumer, RabbitMQProductDeleteConsumer>(); // singleton because we want to have only one instance of the consumer that will be used throughout the application
             services.AddHostedService<RabbitMQProductDeleteHostedService>(); // hosted service because we want to run the consumer in the background and listen for messages from RabbitMQ
+
+
+            // Add ServiceBus 
+            var serviceBusConnectionStringTemplate = configuration["ProductsServiceBus:ConnectionString"];
+            var serviceBusConnectionString = serviceBusConnectionStringTemplate!.Replace("$SERVICEBUS_CONNECTION_STRING",
+                Environment.GetEnvironmentVariable("SERVICEBUS_CONNECTION_STRING") ?? string.Empty);
+            services.AddSingleton(_ =>
+            {
+                return new ServiceBusClient(serviceBusConnectionString);
+            });
+
+            services.AddSingleton<IServiceBusProductUpdateConsumer, ServiceBusProductUpdateConsumer>();
+            services.AddHostedService<ServiceBusProductUpdateHostedService>();
 
             return services;
         }

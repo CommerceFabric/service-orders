@@ -8,11 +8,11 @@ using System.Text;
 
 namespace BusinessLogicLayer.RabbitMQ
 {
-    public class RabbitMQProductNameUpdateConsumer : IDisposable, IRabbitMQProductNameUpdateConsumer
+    public class RabbitMQProductUpdateConsumer : IDisposable, IRabbitMQProductNameUpdateConsumer
     {
         #region Dependencies
         private readonly IConfiguration _configuration;
-        private readonly ILogger<RabbitMQProductNameUpdateConsumer> _logger;
+        private readonly ILogger<RabbitMQProductUpdateConsumer> _logger;
         private readonly IDistributedCache _distributedCache;
         #endregion
 
@@ -20,7 +20,7 @@ namespace BusinessLogicLayer.RabbitMQ
         private IConnection? _connection;
         private readonly SemaphoreSlim _lock = new(1, 1); // Semaphore to ensure thread safety when creating the channel (has 1 permit, so only one thread can enter at a time)
 
-        public RabbitMQProductNameUpdateConsumer(IConfiguration configuration, ILogger<RabbitMQProductNameUpdateConsumer> logger, IDistributedCache distributedCache)
+        public RabbitMQProductUpdateConsumer(IConfiguration configuration, ILogger<RabbitMQProductUpdateConsumer> logger, IDistributedCache distributedCache)
         {
             _configuration = configuration;
             _logger = logger;

@@ -5,11 +5,11 @@ using System.Text;
 
 namespace BusinessLogicLayer.RabbitMQ
 {
-    public class RabbitMQProductNameUpdateHostedService : IHostedService
+    public class RabbitMQProductUpdateHostedService : IHostedService
     {
         private readonly IRabbitMQProductNameUpdateConsumer _consumer;
 
-        public RabbitMQProductNameUpdateHostedService(IRabbitMQProductNameUpdateConsumer consumer)
+        public RabbitMQProductUpdateHostedService(IRabbitMQProductNameUpdateConsumer consumer)
         {
             _consumer = consumer;
         }
