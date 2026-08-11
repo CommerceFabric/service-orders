@@ -26,8 +26,8 @@ namespace BusinessLogicLayer.ServiceBus
             _configuration = configuration;
 
             // instantiate the ServiceBusProcessor with the topic and subscription from configuration
-            var topic = _configuration["ServiceBus:ProductTopic"];
-            var subscription = _configuration["ServiceBus:ProductOrdersSubscription"];
+            var topic = _configuration["ProductsServiceBus:ProductTopic"];
+            var subscription = _configuration["ProductsServiceBus:ProductOrdersSubscription"];
             var options = new ServiceBusProcessorOptions
             {
                 AutoCompleteMessages = false, // We will manually complete the messages after processing

@@ -24,6 +24,7 @@ services:
       - RABBITMQ_USER=admin
       - RABBITMQ_PASSWORD=admin
       - RABBITMQ_PRODUCTS_EXCHANGE=products.exchange
+      - SERVICEBUS_CONNECTION_STRING=${SERVICEBUS_CONNECTION_STRING} # put this in your .env file, and it should be the connection string for your Azure Service Bus namespace
     ports:
       - "7070:8080"
     restart: unless-stopped
@@ -59,9 +60,9 @@ services:
       - users-postgres-network
     restart: unless-stopped
 
-  userservice:
+  users-microservice:
     image: danielmusselwhite/commercefabric_user_microservice:latest
-    container_name: userservice
+    container_name: users-microservice
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORT=8080
@@ -70,6 +71,7 @@ services:
       - COMMERCEFABRIC_USERSERVICE_DB_USER=postgres
       - COMMERCEFABRIC_USERSERVICE_DB_PASSWORD=admin
       - COMMERCEFABRIC_USERSERVICE_DB_NAME=userService
+      - COMMERCEFABRIC_AZURE_ENTRA_CLIENT_SECRET=${COMMERCEFABRIC_AZURE_ENTRA_CLIENT_SECRET} # put this in your .env file, and it should be the client secret for your Azure Entra ID app registration
     ports:
       - "9090:8080"
     networks:
@@ -93,9 +95,9 @@ services:
       - products-mysql-network
     restart: unless-stopped
 
-  productservice:
+  products-microservice:
     image: danielmusselwhite/commercefabric_product_microservice:latest
-    container_name: productservice
+    container_name: products-microservice
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_HTTP_PORT=8080
@@ -109,6 +111,7 @@ services:
       - RABBITMQ_USER=admin
       - RABBITMQ_PASSWORD=admin
       - RABBITMQ_PRODUCTS_EXCHANGE=products.exchange
+      - SERVICEBUS_CONNECTION_STRING=${SERVICEBUS_CONNECTION_STRING} # put this in your .env file, and it should be the connection string for your Azure Service Bus namespace
     ports:
       - "6060:8080"
     networks:
