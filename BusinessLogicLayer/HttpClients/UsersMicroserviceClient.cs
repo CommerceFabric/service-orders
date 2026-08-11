@@ -50,9 +50,9 @@ namespace BusinessLogicLayer.HttpClients
                     return new UserDTO
                     (
                         Guid.Empty,
-                        "Error retrieving user",
-                        "Error retrieving user",
-                        "Error retrieving user"
+                        $"Error retrieving user : {response.ReasonPhrase} ",
+                        $"Error retrieving user : {response.ReasonPhrase}",
+                        $"Error retrieving user : {response.ReasonPhrase}"
                     );
                 }
 
@@ -76,9 +76,9 @@ namespace BusinessLogicLayer.HttpClients
                 return new UserDTO
                 (
                     Guid.Empty,
-                    "Error retrieving user",
-                    "Error retrieving user",
-                    "Error retrieving user"
+                    "Error retrieving user : Circuit breaker is open",
+                    "Error retrieving user : Circuit breaker is open",
+                    "Error retrieving user : Circuit breaker is open"
                 );
             }
             catch (TimeoutRejectedException)
@@ -87,9 +87,9 @@ namespace BusinessLogicLayer.HttpClients
                 return new UserDTO
                 (
                     Guid.Empty,
-                    "Error retrieving user",
-                    "Error retrieving user",
-                    "Error retrieving user"
+                    "Error retrieving user : Request timed out",
+                    "Error retrieving user : Request timed out",
+                    "Error retrieving user : Request timed out"
                 );
 
             }
@@ -99,9 +99,9 @@ namespace BusinessLogicLayer.HttpClients
                 return new UserDTO
                 (
                     Guid.Empty,
-                    "Error retrieving user",
-                    "Error retrieving user",
-                    "Error retrieving user"
+                    "Error retrieving user : Unexpected error",
+                    "Error retrieving user : Unexpected error",
+                    "Error retrieving user : Unexpected error"
                 );
             }
         }

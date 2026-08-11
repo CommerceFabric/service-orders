@@ -27,13 +27,13 @@ namespace BusinessLogicLayer.Policies
 
         public IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy(int handledEventsAllowedBeforeBreaking, TimeSpan durationOfBreak)
         {
-            return Policy.HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode) // if request fails, break the circuit...
+            return Policy.HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode && r.StatusCode != System.Net.HttpStatusCode.NotFound) // if request fails, break the circuit (ignoring notFound as it is not considered an error)...
                 .CircuitBreakerAsync(
                     handledEventsAllowedBeforeBreaking: handledEventsAllowedBeforeBreaking, // number of failures before breaking the circuit
                     durationOfBreak: durationOfBreak, // duration to keep the circuit open
                     onBreak: (outcome, timespan) =>
                     {
-                        _logger.LogWarning("Circuit breaker opened for {Duration} due to: {Error}", timespan, outcome.Exception?.Message);
+                        _logger.LogWarning("Circuit breaker opened for {Duration} due to status code {StatusCode}; and exception {Exception}", timespan, outcome.Result?.StatusCode, outcome.Exception?.Message);
                     },
                     onReset: () =>
                     {
