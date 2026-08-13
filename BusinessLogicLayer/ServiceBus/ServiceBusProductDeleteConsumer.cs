@@ -10,15 +10,15 @@ using System.Text.Json;
 
 namespace BusinessLogicLayer.ServiceBus
 {
-    public class ServiceBusProductUpdateConsumer : IServiceBusProductUpdateConsumer
+    public class ServiceBusProductDeleteConsumer : IServiceBusProductDeleteConsumer
     {
         private readonly ServiceBusProcessor _serviceBusProcessor;
         private readonly IDistributedCache _distributedCache;
-        private readonly ILogger<ServiceBusProductUpdateConsumer> _logger;
+        private readonly ILogger<ServiceBusProductDeleteConsumer> _logger;
         private readonly ServiceBusClient _serviceBusClient;
         private readonly IConfiguration _configuration;
 
-        public ServiceBusProductUpdateConsumer(IDistributedCache distributedCache, ILogger<ServiceBusProductUpdateConsumer> logger, ServiceBusClient serviceBusClient, IConfiguration configuration)
+        public ServiceBusProductDeleteConsumer(IDistributedCache distributedCache, ILogger<ServiceBusProductDeleteConsumer> logger, ServiceBusClient serviceBusClient, IConfiguration configuration)
         {
             _distributedCache = distributedCache;
             _logger = logger;
@@ -26,8 +26,8 @@ namespace BusinessLogicLayer.ServiceBus
             _configuration = configuration;
 
             // instantiate the ServiceBusProcessor with the topic and subscription from configuration
-            var topic = _configuration["ProductsServiceBus:ProductUpdateTopic"];
-            var subscription = _configuration["ProductsServiceBus:ProductUpdateOrdersSubscription"];
+            var topic = _configuration["ProductsServiceBus:ProductDeleteTopic"];
+            var subscription = _configuration["ProductsServiceBus:ProductDeleteOrdersSubscription"];
             var options = new ServiceBusProcessorOptions
             {
                 AutoCompleteMessages = false, // We will manually complete the messages after processing
@@ -38,7 +38,7 @@ namespace BusinessLogicLayer.ServiceBus
             _serviceBusProcessor.ProcessErrorAsync += _serviceBusProcessor_ProcessErrorAsync;
         }
 
-        #region ProductUpdate Message Handling To Update Cache
+        #region ProductDelete Message Handling To Delete Cache
         private async Task _serviceBusProcessor_ProcessMessageAsync(ProcessMessageEventArgs arg)
         {
             var messageBodyJson = arg.Message.Body.ToString();
@@ -46,35 +46,28 @@ namespace BusinessLogicLayer.ServiceBus
 
             if (productDTO != null)
             {
-                await HandleProductUpdate(productDTO);
+                await HandleProductDelete(productDTO);
             }
 
             await arg.CompleteMessageAsync(arg.Message); // tell Service Bus that the message has been processed successfully
         }
 
-        private async Task HandleProductUpdate(ProductDTO updatedProduct)
+        private async Task HandleProductDelete(ProductDTO deletedProduct)
         {
             try
             {
                 #region update the redis cache
-                // handle potential stale Redis cache for the product name update
-                var cacheKey = $"product:{updatedProduct?.ProductID}"; // create a cache key based on the productID
-                var serializedProduct = System.Text.Json.JsonSerializer.Serialize(updatedProduct); // serialize the updated cached product to a string
-
-                // define the cache options for the updated cached product, including the absolute expiration time and sliding expiration time
-                var cacheOptions = new DistributedCacheEntryOptions
-                {
-                    AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(30), // set the cache expiration time (after this time, the cache entry will be removed)
-                };
-                await _distributedCache.SetStringAsync(cacheKey, serializedProduct, cacheOptions); // store the serialized product in the cache with the cache key and options     
+                // handle potential stale Redis cache for the product delete
+                var cacheKey = $"product:{deletedProduct?.ProductID}"; // create a cache key based on the productID
+                await _distributedCache.RemoveAsync(cacheKey); // invalidate the stale cache (if it exists) by removing the cache key from Redis
                 #endregion
 
-                _logger.LogInformation($"Service Bus Consumer received update message, updated cache for: ProductID: {updatedProduct?.ProductID} ({updatedProduct?.ProductName})");
+                _logger.LogInformation($"Service Bus Consumer received delete message, invalidated cache for: ProductID: {deletedProduct?.ProductID}");
             }
             catch (Exception ex)
             {
                 // todo - should probably modify to something like: <retry 3 times -> add to dead letter exchange + some dead letter queue for special handling)
-                _logger.LogError(ex, $"Failed processing Service Bus update message for ProductID: {updatedProduct?.ProductID} ({updatedProduct?.ProductName})");
+                _logger.LogError(ex, $"Failed processing Service Bus delete message for ProductID: {deletedProduct?.ProductID} ({deletedProduct?.ProductName})");
             }
         }
         #endregion

@@ -84,7 +84,7 @@ namespace BusinessLogicLayer.RabbitMQ
                 if (productDeleteMessage == null) return;
 
                 try
-                {   
+                {
                     #region update the redis cache
                     // handle potential stale Redis cache for the product delete
                     var cacheKey = $"product:{productDeleteMessage?.ProductID}"; // create a cache key based on the productID

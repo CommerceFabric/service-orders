@@ -1,16 +1,15 @@
 ﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace BusinessLogicLayer.ServiceBus
 {
-    public class ServiceBusProductUpdateHostedService : IHostedService
+    public class ServiceBusProductDeleteHostedService : IHostedService
     {
-        private readonly IServiceBusProductUpdateConsumer _consumer;
+        private readonly IServiceBusProductDeleteConsumer _consumer;
 
-        public ServiceBusProductUpdateHostedService(IServiceBusProductUpdateConsumer consumer)
+        public ServiceBusProductDeleteHostedService(IServiceBusProductDeleteConsumer consumer)
         {
             _consumer = consumer;
         }

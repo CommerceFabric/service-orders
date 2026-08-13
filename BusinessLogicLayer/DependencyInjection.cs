@@ -65,6 +65,8 @@ namespace BusinessLogicLayer
 
             services.AddSingleton<IServiceBusProductUpdateConsumer, ServiceBusProductUpdateConsumer>();
             services.AddHostedService<ServiceBusProductUpdateHostedService>();
+            services.AddSingleton<IServiceBusProductDeleteConsumer, ServiceBusProductDeleteConsumer>();
+            services.AddHostedService<ServiceBusProductDeleteHostedService>();
 
             return services;
         }
