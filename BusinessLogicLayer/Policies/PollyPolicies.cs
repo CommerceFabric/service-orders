@@ -14,7 +14,7 @@ namespace BusinessLogicLayer.Policies
 
         public IAsyncPolicy<HttpResponseMessage> GetRetryPolicy(int retryCount)
         {
-            return Policy.HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode) // if request fails, wait and retry...
+            return Policy.HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode && r.StatusCode != System.Net.HttpStatusCode.NotFound) // if request fails, break the circuit (ignoring notFound as it is not considered an error)...
                 .WaitAndRetryAsync(
                     retryCount: retryCount, // max number of retries
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), // exponential backoff
