@@ -1,12 +1,17 @@
 ﻿using AutoMapper;
 using BusinessLogicLayer.DTO;
 using BusinessLogicLayer.HttpClients;
+using BusinessLogicLayer.ServiceBus.Publisher;
 using BusinessLogicLayer.ServiceContracts;
 using DataAccessLayer.Entities;
 using DataAccessLayer.RepositoryContracts;
 using FluentValidation;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.Azure.Amqp.Framing;
+using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
+using RabbitMQ.Client;
+using System.Reflection.PortableExecutable;
 
 namespace BusinessLogicLayer.Services
 {
@@ -17,6 +22,8 @@ namespace BusinessLogicLayer.Services
         private readonly IMapper _mapper;
         private readonly UsersMicroserviceClient _usersMicroserviceClient;
         private readonly ProductsMicroserviceClient _productsMicroserviceClient;
+        private readonly IServiceBusPublisher _serviceBusPublisher;
+        private readonly IConfiguration _configuration;
 
 
         #region Validators
@@ -38,12 +45,16 @@ namespace BusinessLogicLayer.Services
             IValidator<OrderAddRequest> orderAddRequestValidator,
             IValidator<OrderUpdateRequest> orderUpdateRequestValidator,
             IValidator<OrderItemAddRequest> orderItemAddRequestValidator,
-            IValidator<OrderItemUpdateRequest> orderItemUpdateRequestValidator)
+            IValidator<OrderItemUpdateRequest> orderItemUpdateRequestValidator,
+            IServiceBusPublisher serviceBusPublisher,
+            IConfiguration configuration)
         {
             _ordersRepository = ordersRepository;
             _mapper = mapper;
             _usersMicroserviceClient = usersMicroserviceClient;
             _productsMicroserviceClient = productsMicroserviceClient;
+            _serviceBusPublisher = serviceBusPublisher;
+            _configuration = configuration;
 
             _orderAddRequestValidator = orderAddRequestValidator;
             _orderUpdateRequestValidator = orderUpdateRequestValidator;
@@ -91,8 +102,20 @@ namespace BusinessLogicLayer.Services
             var orderOutput = await _ordersRepository.AddOrder(orderInput);
 
             // Convert data from Order entity to OrderResponse DTO
-            var orderDTO = _mapper.Map<OrderResponse>(orderOutput);
-            return await EnrichOrder(orderDTO, productDTOsDictionary, userDTO);
+            var orderDTO = await EnrichOrder(_mapper.Map<OrderResponse>(orderOutput), productDTOsDictionary, userDTO);
+
+            #region Publish a message to the Service Bus topic for product deletion
+            var headers = new Dictionary<string, object>
+                {
+                    { "event", "order.placed" },
+                    { "RowCount", 1  },
+                    { "OrderedItemCount", orderDTO?.OrderItems?.Count ?? 0}
+                };
+            var topicName = _configuration["ProductsServiceBus:OrderCreatedTopic"];
+            await _serviceBusPublisher.Publish(topicName, headers, orderDTO);
+            #endregion
+
+            return orderDTO;
         }
 
         public async Task<bool> DeleteOrder(Guid orderID)

@@ -3,13 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace BusinessLogicLayer.RabbitMQ
+namespace BusinessLogicLayer.RabbitMQ.ProductDeleteConsumption
 {
-    public class RabbitMQProductUpdateHostedService : IHostedService
+    public class RabbitMQProductDeleteHostedService : IHostedService
     {
-        private readonly IRabbitMQProductNameUpdateConsumer _consumer;
+        private readonly IRabbitMQProductDeleteConsumer _consumer;
 
-        public RabbitMQProductUpdateHostedService(IRabbitMQProductNameUpdateConsumer consumer)
+        public RabbitMQProductDeleteHostedService(IRabbitMQProductDeleteConsumer consumer)
         {
             _consumer = consumer;
         }

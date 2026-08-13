@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.Json;
 
-namespace BusinessLogicLayer.ServiceBus
+namespace BusinessLogicLayer.ServiceBus.ProductDeleteConsumption
 {
     public class ServiceBusProductDeleteConsumer : IServiceBusProductDeleteConsumer
     {
@@ -42,17 +42,17 @@ namespace BusinessLogicLayer.ServiceBus
         private async Task _serviceBusProcessor_ProcessMessageAsync(ProcessMessageEventArgs arg)
         {
             var messageBodyJson = arg.Message.Body.ToString();
-            var productDTO = JsonSerializer.Deserialize<ProductDTO>(messageBodyJson);
+            var productDeleteMessage = JsonSerializer.Deserialize<ProductDeleteMessage>(messageBodyJson);
 
-            if (productDTO != null)
+            if (productDeleteMessage != null)
             {
-                await HandleProductDelete(productDTO);
+                await HandleProductDelete(productDeleteMessage);
             }
 
             await arg.CompleteMessageAsync(arg.Message); // tell Service Bus that the message has been processed successfully
         }
 
-        private async Task HandleProductDelete(ProductDTO deletedProduct)
+        private async Task HandleProductDelete(ProductDeleteMessage deletedProduct)
         {
             try
             {
@@ -67,14 +67,14 @@ namespace BusinessLogicLayer.ServiceBus
             catch (Exception ex)
             {
                 // todo - should probably modify to something like: <retry 3 times -> add to dead letter exchange + some dead letter queue for special handling)
-                _logger.LogError(ex, $"Failed processing Service Bus delete message for ProductID: {deletedProduct?.ProductID} ({deletedProduct?.ProductName})");
+                _logger.LogError(ex, $"Failed processing Service Bus delete message for ProductID: {deletedProduct?.ProductID}");
             }
         }
         #endregion
 
-        private async Task _serviceBusProcessor_ProcessErrorAsync(ProcessErrorEventArgs arg)
+        private async Task _serviceBusProcessor_ProcessErrorAsync(ProcessErrorEventArgs args)
         {
-            _logger.LogError(arg.Exception, $"Service Bus Processor encountered an error: {arg.Exception.Message}");
+            _logger.LogError(args.Exception, $"Service Bus Processor encountered an error: {args.Exception.Message}");
         }
 
         public async Task ConsumeAsync()

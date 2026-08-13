@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BusinessLogicLayer.RabbitMQ
+namespace BusinessLogicLayer.DTO
 {
     public record ProductDeleteMessage
     {

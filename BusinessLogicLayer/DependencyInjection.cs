@@ -1,7 +1,10 @@
 ﻿using Azure.Messaging.ServiceBus;
 using BusinessLogicLayer.Mappers;
-using BusinessLogicLayer.RabbitMQ;
-using BusinessLogicLayer.ServiceBus;
+using BusinessLogicLayer.RabbitMQ.ProductDeleteConsumption;
+using BusinessLogicLayer.RabbitMQ.ProductUpdateConsumption;
+using BusinessLogicLayer.ServiceBus.ProductDeleteConsumption;
+using BusinessLogicLayer.ServiceBus.ProductUpdateConsumption;
+using BusinessLogicLayer.ServiceBus.Publisher;
 using BusinessLogicLayer.ServiceContracts;
 using BusinessLogicLayer.Services;
 using FluentValidation;
@@ -65,8 +68,11 @@ namespace BusinessLogicLayer
 
             services.AddSingleton<IServiceBusProductUpdateConsumer, ServiceBusProductUpdateConsumer>();
             services.AddHostedService<ServiceBusProductUpdateHostedService>();
+
             services.AddSingleton<IServiceBusProductDeleteConsumer, ServiceBusProductDeleteConsumer>();
             services.AddHostedService<ServiceBusProductDeleteHostedService>();
+
+            services.AddSingleton<IServiceBusPublisher, ServiceBusPublisher>();
 
             return services;
         }

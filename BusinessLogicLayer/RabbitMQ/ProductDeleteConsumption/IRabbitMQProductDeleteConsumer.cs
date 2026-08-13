@@ -1,4 +1,4 @@
-﻿namespace BusinessLogicLayer.RabbitMQ
+﻿namespace BusinessLogicLayer.RabbitMQ.ProductDeleteConsumption
 {
     public interface IRabbitMQProductDeleteConsumer
     {
