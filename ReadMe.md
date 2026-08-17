@@ -18,7 +18,7 @@
 * RabbitMQ (event messaging, to consume product update events from the Products microservice)
 * Azure Service Bus (to post order created events to the Service Bus topic, which is then consumed by the Products microservice to update product stock levels)
 * Polly (for retry and circuit breaker policies)
-
+* GitHub actions for CI, pushing docker images to the Azure Container Registry, then triggering [Infra-Platform](https://github.com/CommerceFabric/infra-platform/blob/main/docs/DeploymentFlow.md#microservice-release-sequence) to do the CD of deploying the new image to the AKS cluster.
 
 ### Architecture
 
